@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "objectdetector"
+version = "0.1.0"
+description = "Wraps a state-of-the-art detection model and communicates on its inputs and outputs following visionapi."
+authors = ["flonix8 <flstanek@googlemail.com>"]
+license = "GPL3"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+ultralytics = "^8.0.97"
+pydantic = "^1.10.7"
+torch = "^2.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
