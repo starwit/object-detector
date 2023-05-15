@@ -25,7 +25,7 @@ class Detector:
         self.detector_loop = _DetectorLoop(config, self.stop_event, self.input_queue, self.output_queue)
 
     def start(self):
-        self.detector_loop.run()
+        self.detector_loop.start()
 
     def stop(self):
         self.stop_event.set()
@@ -42,7 +42,7 @@ class Detector:
         self._assert_running()
 
         try:
-            self.output_queue.get(block, timeout)
+            return self.output_queue.get(block, timeout)
         except queue.Empty:
             raise NoDetectionError(f'No detection has been received after having waited {timeout}s')
 
@@ -69,16 +69,21 @@ class _DetectorLoop(mp.Process):
         self._setup_model()
 
         while not self.stop_event.is_set():
-            input_image, frame_proto = self._get_next_image()
+            try: 
+                input_image, frame_proto = self._get_next_image(block=False)
+            except queue.Empty:
+                time.sleep(0.01)
+                continue
+                
             inf_image = self._prepare_input(input_image)
 
             yolo_prediction = self.model(inf_image)
-            predictions = non_max_suppression(yolo_prediction)
+            predictions = non_max_suppression(yolo_prediction)[0]
 
-            predictions[:, :4] = scale_boxes(inf_image.shape[2:], predictions[:, :4], input_image.shape).round()
+            predictions[:, :4] = scale_boxes(inf_image.shape[2:], predictions[:, :4], input_image.shape[:2]).round()
 
             try:
-                self.output_queue.put(self._create_output(frame_proto, predictions), block=False)
+                self.output_queue.put(self._create_output(predictions, frame_proto), block=False)
             except queue.Full:
                 time.sleep(0.01)
             
@@ -96,8 +101,8 @@ class _DetectorLoop(mp.Process):
     def _yolo_weights(self):
         return f'yolov8{self.config.model_config.size.value}.pt'
     
-    def _get_next_image(self):
-        frame_proto_raw = self.input_queue.get(block=True)
+    def _get_next_image(self, block=True):
+        frame_proto_raw = self.input_queue.get(block)
 
         frame_proto = VideoFrame()
         frame_proto.ParseFromString(frame_proto_raw)
@@ -110,29 +115,23 @@ class _DetectorLoop(mp.Process):
         out_img = out_img.transpose((2, 0, 1))[::-1]
         out_img = np.ascontiguousarray(out_img)
         out_img = torch.from_numpy(out_img).to(self.device).float() / 255.0
-        # TODO Expand for batch dim?
+        return out_img.unsqueeze(0)
 
     def _create_output(self, predictions, frame_proto):
         output = DetectionOutput()
 
-        detections = []
         for pred in predictions:
-            detection = Detection()
+            detection = output.detections.add()
 
-            bbox = BoundingBox()
-            bbox.min_x = pred[0]
-            bbox.min_y = pred[1]
-            bbox.max_x = pred[2]
-            bbox.max_y = pred[3]
+            detection.bounding_box.min_x = int(pred[0])
+            detection.bounding_box.min_y = int(pred[1])
+            detection.bounding_box.max_x = int(pred[2])
+            detection.bounding_box.max_y = int(pred[3])
 
-            detection.bounding_box = bbox
-            detection.confidence = pred[4]
-            detection.class_id = pred[5]
+            detection.confidence = float(pred[4])
+            detection.class_id = int(pred[5])
 
-            detections.append(detection)
+        output.frame.CopyFrom(frame_proto)
 
-        output.detections[:] = detections
-        output.frame = frame_proto
-
-        return output
+        return output.SerializeToString()
 
