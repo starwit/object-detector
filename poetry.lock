@@ -1266,14 +1266,14 @@ files = [
 
 [[package]]
 name = "ultralytics"
-version = "8.0.98"
+version = "8.0.101"
 description = "Ultralytics YOLOv8 for SOTA object detection, multi-object tracking, instance segmentation, pose estimation and image classification."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "ultralytics-8.0.98-py3-none-any.whl", hash = "sha256:df9736693ee05b884e7325ab2868aac32812db3b5448ce58c27b0faeb0c2589c"},
-    {file = "ultralytics-8.0.98.tar.gz", hash = "sha256:843b04ad7774bf51c2a1b6f37f25cdd00846bafd893f5578d5959e578cad38c3"},
+    {file = "ultralytics-8.0.101-py3-none-any.whl", hash = "sha256:fa11bcfd3b0ab779b6741ad889a55c092ce03c310035acf24b08e7c6d751aead"},
+    {file = "ultralytics-8.0.101.tar.gz", hash = "sha256:bff11b802daa9af062cd50e14b2774891ecfeca30fae9c73328056e24ff0b8c5"},
 ]
 
 [package.dependencies]
@@ -1293,7 +1293,7 @@ torchvision = ">=0.8.1"
 tqdm = ">=4.64.0"
 
 [package.extras]
-dev = ["check-manifest", "coverage", "mkdocs-git-revision-date-localized-plugin", "mkdocs-material", "mkdocs-redirects", "mkdocs-ultralytics-plugin", "mkdocstrings[python]", "pytest", "pytest-cov"]
+dev = ["check-manifest", "coverage", "mkdocs-material", "mkdocs-redirects", "mkdocs-ultralytics-plugin", "mkdocstrings[python]", "pytest", "pytest-cov"]
 export = ["coremltools (>=6.0)", "openvino-dev (>=2022.3)", "tensorflowjs"]
 
 [[package]]
@@ -1331,7 +1331,7 @@ protobuf = "^4.23.0"
 type = "git"
 url = "git@github.com:starwit/vision-api.git"
 reference = "HEAD"
-resolved_reference = "0ffb5ca16bf3db1446fd2a7bf90c67f9c2fd8b0f"
+resolved_reference = "d3d542ab67613615b4544abfb4be0331fff2ad43"
 subdirectory = "python/visionapi"
 [metadata]
 lock-version = "2.0"

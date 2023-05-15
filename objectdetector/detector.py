@@ -8,9 +8,8 @@ from ultralytics.nn.autobackend import AutoBackend
 from ultralytics.yolo.data.augment import LetterBox
 from ultralytics.yolo.utils.checks import check_imgsz
 from ultralytics.yolo.utils.ops import non_max_suppression, scale_boxes
-from visionapi.proto.detector_pb2 import (BoundingBox, Detection,
-                                          DetectionOutput)
-from visionapi.proto.videosource_pb2 import VideoFrame
+from visionapi.detector_pb2 import DetectionOutput
+from visionapi.videosource_pb2 import VideoFrame
 
 from .config import ObjectDetectorConfig
 from .errors import *
@@ -107,7 +106,7 @@ class _DetectorLoop(mp.Process):
         frame_proto = VideoFrame()
         frame_proto.ParseFromString(frame_proto_raw)
 
-        input_image = np.frombuffer(frame_proto.frame, dtype=np.uint8).reshape(frame_proto.shape)
+        input_image = np.frombuffer(frame_proto.frame_data, dtype=np.uint8).reshape(frame_proto.shape)
         return input_image, frame_proto
     
     def _prepare_input(self, image):

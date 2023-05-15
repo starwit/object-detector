@@ -1,8 +1,8 @@
 from objectdetector.detector import Detector
 from objectdetector.config import ObjectDetectorConfig, ModelSizeEnum, YoloV8Config
 import time 
-from visionapi.proto.videosource_pb2 import VideoFrame
-from visionapi.proto.detector_pb2 import DetectionOutput
+from visionapi.videosource_pb2 import VideoFrame
+from visionapi.detector_pb2 import DetectionOutput
 from google.protobuf.json_format import MessageToDict
 import json
 import cv2
@@ -14,7 +14,7 @@ def to_proto(frame):
     vf = VideoFrame()
     vf.timestamp_utc_ms = time.time_ns() // 1000
     vf.shape[:] = frame.shape
-    vf.frame = frame.tobytes()
+    vf.frame_data = frame.tobytes()
 
     return vf.SerializeToString()
 
@@ -23,8 +23,8 @@ def deserialize_proto(message):
     det_output.ParseFromString(message)
     return det_output
 
-def frame_from_proto(video_frame):
-    return np.frombuffer(video_frame.frame, dtype=np.uint8).reshape(video_frame.shape)
+def frame_from_proto(frame):
+    return np.frombuffer(frame.frame_data, dtype=np.uint8).reshape(frame.shape)
 
 proto_frame = to_proto(frame)
 
