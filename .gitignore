@@ -4,3 +4,5 @@ __pycache__
 *.pt
 *.png
 *.jpg
+.demo_frames
+.demo_detections

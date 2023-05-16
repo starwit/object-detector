@@ -1,14 +1,22 @@
-from objectdetector.detector import Detector
-from objectdetector.config import ObjectDetectorConfig, ModelSizeEnum, YoloV8Config
-import time 
-from visionapi.videosource_pb2 import VideoFrame
-from visionapi.detector_pb2 import DetectionOutput
-from google.protobuf.json_format import MessageToDict
-import json
-import cv2
-import numpy as np
+import os
+import time
 
-frame = cv2.imread('./test.jpg')
+import cv2
+from google.protobuf.text_format import MessageToString
+from visionapi.detector_pb2 import DetectionOutput
+from visionapi.videosource_pb2 import VideoFrame
+
+from objectdetector.config import (ModelSizeEnum, ObjectDetectorConfig,
+                                   YoloV8Config)
+from objectdetector.detector import Detector
+
+
+def frame_iter(path):
+    files = sorted(os.listdir(path))
+    for file in files:
+        basename = os.path.splitext(file)[0]
+        cv2_frame = cv2.imread(os.path.join(path, file))
+        yield basename, cv2_frame
 
 def to_proto(frame):
     vf = VideoFrame()
@@ -23,10 +31,10 @@ def deserialize_proto(message):
     det_output.ParseFromString(message)
     return det_output
 
-def frame_from_proto(frame):
-    return np.frombuffer(frame.frame_data, dtype=np.uint8).reshape(frame.shape)
+def write_detection(basename, path, detection):
+    with open(os.path.join(path, basename) + '.pbtxt', 'w') as f:
+        f.write(MessageToString(detection))
 
-proto_frame = to_proto(frame)
 
 detector = Detector(
     ObjectDetectorConfig(
@@ -37,11 +45,9 @@ detector = Detector(
 
 detector.start()
 
-detector.put_frame(proto_frame)
-det_output = deserialize_proto(detector.get_detection())
+for basename, frame in frame_iter('.demo_frames'):
+    detector.put_frame(to_proto(frame))
+    detection = deserialize_proto(detector.get_detection())
+    write_detection(basename, '.demo_detections', detection)
 
 detector.stop()
-
-print(json.dumps(MessageToDict(det_output)['detections'], indent=2))
-cv2.imshow('win', frame_from_proto(det_output.frame))
-cv2.waitKey(0)
