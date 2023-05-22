@@ -106,7 +106,8 @@ class _DetectorLoop(mp.Process):
         frame_proto = VideoFrame()
         frame_proto.ParseFromString(frame_proto_raw)
 
-        input_image = np.frombuffer(frame_proto.frame_data, dtype=np.uint8).reshape(frame_proto.shape)
+        input_image = np.frombuffer(frame_proto.frame_data, dtype=np.uint8) \
+            .reshape((frame_proto.shape.height, frame_proto.shape.width, frame_proto.shape.channels))
         return input_image, frame_proto
     
     def _prepare_input(self, image):

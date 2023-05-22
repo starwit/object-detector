@@ -4,7 +4,7 @@ import time
 import cv2
 from google.protobuf.text_format import MessageToString
 from visionapi.detector_pb2 import DetectionOutput
-from visionapi.videosource_pb2 import VideoFrame
+from visionapi.videosource_pb2 import VideoFrame, Shape
 
 from objectdetector.config import (ModelSizeEnum, ObjectDetectorConfig,
                                    YoloV8Config)
@@ -21,7 +21,10 @@ def frame_iter(path):
 def to_proto(frame):
     vf = VideoFrame()
     vf.timestamp_utc_ms = time.time_ns() // 1000
-    vf.shape[:] = frame.shape
+
+    shape = Shape()
+    shape.height, shape.width, shape.channels = frame.shape[0], frame.shape[1], frame.shape[2]
+    vf.shape.CopyFrom(shape)
     vf.frame_data = frame.tobytes()
 
     return vf.SerializeToString()
@@ -31,9 +34,9 @@ def deserialize_proto(message):
     det_output.ParseFromString(message)
     return det_output
 
-def write_detection(basename, path, detection):
-    with open(os.path.join(path, basename) + '.pbtxt', 'w') as f:
-        f.write(MessageToString(detection))
+def write_detection(basename, path, detection: DetectionOutput):
+    with open(os.path.join(path, basename) + '.bin', 'wb') as f:
+        f.write(detection.SerializeToString())
 
 
 detector = Detector(
