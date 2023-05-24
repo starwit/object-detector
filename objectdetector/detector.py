@@ -86,8 +86,8 @@ class _DetectorLoop(mp.Process):
             except queue.Full:
                 time.sleep(0.01)
             
-        self.input_queue.cancel_join_thread()
-        self.output_queue.cancel_join_thread()
+        self._drain_queue(self.input_queue)
+        self._drain_queue(self.output_queue)
 
     def _setup_model(self):
         self.device = torch.device(self.config.model_config.device)
@@ -134,4 +134,11 @@ class _DetectorLoop(mp.Process):
         output.frame.CopyFrom(frame_proto)
 
         return output.SerializeToString()
+    
+    def _drain_queue(self, q: mp.Queue):
+        try:
+            while True:
+                q.get(block=True, timeout=1)
+        except queue.Empty:
+            pass
 
