@@ -1,3 +1,4 @@
+from typing import Any
 import numpy as np
 import torch
 from ultralytics.nn.autobackend import AutoBackend
@@ -19,6 +20,9 @@ class Detector:
         self.input_image_size = None
 
         self._setup_model()
+
+    def __call__(self, input_proto) -> Any:
+        return self.get(input_proto)
 
     @torch.no_grad()
     def get(self, input_proto):
