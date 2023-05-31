@@ -34,7 +34,11 @@ def deserialize_proto(message):
     det_output.ParseFromString(message)
     return det_output
 
-def write_detection(basename, path, detection: DetectionOutput):
+def write_detection_text(basename, path, detection: DetectionOutput):
+    with open(os.path.join(path, basename) + '.pbtxt', 'w') as f:
+        f.write(MessageToString(detection))
+
+def write_detection_bin(basename, path, detection: DetectionOutput):
     with open(os.path.join(path, basename) + '.bin', 'wb') as f:
         f.write(detection.SerializeToString())
 
@@ -46,11 +50,8 @@ detector = Detector(
     )
 )
 
-detector.start()
-
 for basename, frame in frame_iter('.demo_frames'):
-    detector.put_frame(to_proto(frame))
-    detection = deserialize_proto(detector.get_detection())
-    write_detection(basename, '.demo_detections', detection)
+    detection = deserialize_proto(detector.get(to_proto(frame)))
+    # write_detection_text(basename, '.demo_detections', detection)
+    write_detection_bin(basename, '.demo_detections', detection)
 
-detector.stop()

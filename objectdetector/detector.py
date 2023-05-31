@@ -1,7 +1,3 @@
-import multiprocessing as mp
-import queue
-import time
-
 import numpy as np
 import torch
 from ultralytics.nn.autobackend import AutoBackend
@@ -12,82 +8,31 @@ from visionapi.detector_pb2 import DetectionOutput
 from visionapi.videosource_pb2 import VideoFrame
 
 from .config import ObjectDetectorConfig
-from .errors import *
 
 
 class Detector:
     def __init__(self, config: ObjectDetectorConfig) -> None:
         self.config = config
-        self.stop_event = mp.Event()
-        self.input_queue = mp.Queue(5)
-        self.output_queue = mp.Queue(5)
-        self.detector_loop = _DetectorLoop(config, self.stop_event, self.input_queue, self.output_queue)
-
-    def start(self):
-        self.detector_loop.start()
-
-    def stop(self):
-        self.stop_event.set()
-
-    def put_frame(self, frame, block=True, timeout=10):
-        self._assert_running()
-
-        try:
-            self.input_queue.put(frame, block, timeout)
-        except queue.Full:
-            raise InputFullError(f'No frame could be added to the input queue after having waited {timeout}s')
-
-    def get_detection(self, block=True, timeout=10):
-        self._assert_running()
-
-        try:
-            return self.output_queue.get(block, timeout)
-        except queue.Empty:
-            raise NoDetectionError(f'No detection has been received after having waited {timeout}s')
-
-    def _assert_running(self):
-        if self.stop_event.is_set():
-            raise StoppedError('Detector has already been stopped')
-        
-
-class _DetectorLoop(mp.Process):
-    def __init__(self, config: ObjectDetectorConfig, stop_event, input_queue, output_queue, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        
-        self.stop_event = stop_event
-        self.config = config
-        self.input_queue = input_queue
-        self.output_queue = output_queue
 
         self.model = None
         self.device = None
         self.input_image_size = None
 
-    @torch.no_grad()
-    def run(self):
         self._setup_model()
 
-        while not self.stop_event.is_set():
-            try: 
-                input_image, frame_proto = self._get_next_image(block=False)
-            except queue.Empty:
-                time.sleep(0.01)
-                continue
-                
-            inf_image = self._prepare_input(input_image)
-
-            yolo_prediction = self.model(inf_image)
-            predictions = non_max_suppression(yolo_prediction)[0]
-
-            predictions[:, :4] = scale_boxes(inf_image.shape[2:], predictions[:, :4], input_image.shape[:2]).round()
-
-            try:
-                self.output_queue.put(self._create_output(predictions, frame_proto), block=False)
-            except queue.Full:
-                time.sleep(0.01)
+    @torch.no_grad()
+    def get(self, input_proto):
             
-        self._drain_queue(self.input_queue)
-        self._drain_queue(self.output_queue)
+        input_image, frame_proto = self._unpack_proto(input_proto)
+            
+        inf_image = self._prepare_input(input_image)
+
+        yolo_prediction = self.model(inf_image)
+        predictions = non_max_suppression(yolo_prediction)[0]
+
+        predictions[:, :4] = scale_boxes(inf_image.shape[2:], predictions[:, :4], input_image.shape[:2]).round()
+
+        return self._create_output(predictions, frame_proto)
 
     def _setup_model(self):
         self.device = torch.device(self.config.model_config.device)
@@ -100,11 +45,9 @@ class _DetectorLoop(mp.Process):
     def _yolo_weights(self):
         return f'yolov8{self.config.model_config.size.value}.pt'
     
-    def _get_next_image(self, block=True):
-        frame_proto_raw = self.input_queue.get(block)
-
+    def _unpack_proto(self, proto_bytes):
         frame_proto = VideoFrame()
-        frame_proto.ParseFromString(frame_proto_raw)
+        frame_proto.ParseFromString(proto_bytes)
 
         input_image = np.frombuffer(frame_proto.frame_data, dtype=np.uint8) \
             .reshape((frame_proto.shape.height, frame_proto.shape.width, frame_proto.shape.channels))
@@ -134,11 +77,3 @@ class _DetectorLoop(mp.Process):
         output.frame.CopyFrom(frame_proto)
 
         return output.SerializeToString()
-    
-    def _drain_queue(self, q: mp.Queue):
-        try:
-            while True:
-                q.get(block=True, timeout=1)
-        except queue.Empty:
-            pass
-
