@@ -21,7 +21,7 @@ class Detector:
 
         self._setup_model()
 
-    def __call__(self, input_proto) -> Any:
+    def __call__(self, input_proto, *args, **kwargs) -> Any:
         return self.get(input_proto)
 
     @torch.no_grad()
