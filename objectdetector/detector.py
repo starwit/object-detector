@@ -1,12 +1,13 @@
+import time
 from typing import Any
+
 import numpy as np
 import torch
 from ultralytics.nn.autobackend import AutoBackend
 from ultralytics.yolo.data.augment import LetterBox
 from ultralytics.yolo.utils.checks import check_imgsz
 from ultralytics.yolo.utils.ops import non_max_suppression, scale_boxes
-from visionapi.detector_pb2 import DetectionOutput
-from visionapi.videosource_pb2 import VideoFrame
+from visionapi.messages_pb2 import DetectionOutput, VideoFrame, Metrics
 
 from .config import ObjectDetectorConfig
 
@@ -29,14 +30,16 @@ class Detector:
             
         input_image, frame_proto = self._unpack_proto(input_proto)
             
+        inference_start = time.monotonic_ns()
         inf_image = self._prepare_input(input_image)
 
         yolo_prediction = self.model(inf_image)
-        predictions = non_max_suppression(yolo_prediction)[0]
 
+        predictions = non_max_suppression(yolo_prediction)[0]
         predictions[:, :4] = scale_boxes(inf_image.shape[2:], predictions[:, :4], input_image.shape[:2]).round()
 
-        return self._create_output(predictions, frame_proto)
+        inference_time_us = (time.monotonic_ns() - inference_start) // 1000
+        return self._create_output(predictions, frame_proto, inference_time_us)
 
     def _setup_model(self):
         self.device = torch.device(self.config.model_config.device)
@@ -64,7 +67,7 @@ class Detector:
         out_img = torch.from_numpy(out_img).to(self.device).float() / 255.0
         return out_img.unsqueeze(0)
 
-    def _create_output(self, predictions, frame_proto):
+    def _create_output(self, predictions, frame_proto, inference_time_us):
         output = DetectionOutput()
 
         for pred in predictions:
@@ -79,5 +82,7 @@ class Detector:
             detection.class_id = int(pred[5])
 
         output.frame.CopyFrom(frame_proto)
+
+        output.metrics.detection_inference_time_us = inference_time_us
 
         return output.SerializeToString()

@@ -3,8 +3,8 @@ import time
 
 import cv2
 from google.protobuf.text_format import MessageToString
-from visionapi.detector_pb2 import DetectionOutput
-from visionapi.videosource_pb2 import VideoFrame, Shape
+from visionapi.messages_pb2 import DetectionOutput
+from visionapi.messages_pb2 import VideoFrame, Shape
 
 from objectdetector.config import (ModelSizeEnum, ObjectDetectorConfig,
                                    YoloV8Config)
@@ -52,6 +52,7 @@ detector = Detector(
 
 for basename, frame in frame_iter('.demo_frames'):
     detection = deserialize_proto(detector.get(to_proto(frame)))
+    print(f'Inference time: {detection.metrics.detection_inference_time_us} us')
     # write_detection_text(basename, '.demo_detections', detection)
     write_detection_bin(basename, '.demo_detections', detection)
 
