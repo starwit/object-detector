@@ -35,7 +35,11 @@ class Detector:
 
         yolo_prediction = self.model(inf_image)
 
-        predictions = non_max_suppression(yolo_prediction)[0]
+        predictions = non_max_suppression(
+            yolo_prediction, 
+            conf_thres=self.config.model_config.confidence_threshold, 
+            iou_thres=self.config.model_config.iou_threshold
+        )[0]
         predictions[:, :4] = scale_boxes(inf_image.shape[2:], predictions[:, :4], input_image.shape[:2]).round()
 
         inference_time_us = (time.monotonic_ns() - inference_start) // 1000
@@ -44,8 +48,9 @@ class Detector:
     def _setup_model(self):
         self.device = torch.device(self.config.model_config.device)
         self.model = AutoBackend(
-            self._yolo_weights(), 
-            device=self.device
+            self._yolo_weights(),
+            device=self.device,
+            fp16=self.config.model_config.fp16_quantization
         )
         self.input_image_size = check_imgsz(self.config.inference_size, stride=self.model.stride)
 

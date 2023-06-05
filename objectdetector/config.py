@@ -9,9 +9,12 @@ class ModelSizeEnum(str, Enum):
     XLARGE = 'x'
 
 class YoloV8Config(BaseModel):
-    size: ModelSizeEnum
-    device: str
+    size: ModelSizeEnum = ModelSizeEnum.NANO
+    device: str = 'cpu'
+    confidence_threshold: float = 0.25
+    iou_threshold: float = 0.45
+    fp16_quantization: bool = False
 
 class ObjectDetectorConfig(BaseModel):
     model_config: YoloV8Config
-    inference_size: tuple[int, int]
+    inference_size: tuple[int, int] = (640, 640)
