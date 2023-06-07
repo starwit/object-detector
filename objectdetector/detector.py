@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import Any
 
@@ -7,9 +8,12 @@ from ultralytics.nn.autobackend import AutoBackend
 from ultralytics.yolo.data.augment import LetterBox
 from ultralytics.yolo.utils.checks import check_imgsz
 from ultralytics.yolo.utils.ops import non_max_suppression, scale_boxes
-from visionapi.messages_pb2 import DetectionOutput, VideoFrame, Metrics
+from visionapi.messages_pb2 import DetectionOutput, Metrics, VideoFrame
 
 from .config import ObjectDetectorConfig
+
+logging.basicConfig(format='%(asctime)s %(name)-15s %(levelname)-8s %(processName)-10s %(message)s')
+logger = logging.getLogger(__name__)
 
 
 class Detector:
@@ -46,6 +50,7 @@ class Detector:
         return self._create_output(predictions, frame_proto, inference_time_us)
 
     def _setup_model(self):
+        logger.info('Setting up object-detector model...')
         self.device = torch.device(self.config.model_config.device)
         self.model = AutoBackend(
             self._yolo_weights(),
