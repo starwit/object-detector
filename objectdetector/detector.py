@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 class Detector:
     def __init__(self, config: ObjectDetectorConfig) -> None:
         self.config = config
+        logger.setLevel(self.config.log_level.value)
 
         self.model = None
         self.device = None

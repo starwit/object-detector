@@ -7,7 +7,7 @@ from visionapi.messages_pb2 import DetectionOutput
 from visionapi.messages_pb2 import VideoFrame, Shape
 
 from objectdetector.config import (ModelSizeEnum, ObjectDetectorConfig,
-                                   YoloV8Config)
+                                   YoloV8Config, LogLevel)
 from objectdetector.detector import Detector
 
 
@@ -45,6 +45,7 @@ def write_detection_bin(basename, path, detection: DetectionOutput):
 
 detector = Detector(
     ObjectDetectorConfig(
+        log_level=LogLevel.DEBUG,
         model_config=YoloV8Config(size=ModelSizeEnum.NANO, device='cuda:0'),
         inference_size=(640,640)
     )
