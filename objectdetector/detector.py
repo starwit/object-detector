@@ -72,7 +72,7 @@ class Detector:
         return input_image, frame_proto
     
     def _prepare_input(self, image):
-        out_img = LetterBox(self.config.inference_size, auto=True, stride=self.model.stride)(image=image)
+        out_img = LetterBox(self.input_image_size, auto=True, stride=self.model.stride)(image=image)
         out_img = out_img.transpose((2, 0, 1))[::-1]
         out_img = np.ascontiguousarray(out_img)
         out_img = torch.from_numpy(out_img).to(self.device).float() / 255.0
