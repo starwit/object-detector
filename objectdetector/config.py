@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, conlist
 from enum import Enum
 
 class LogLevel(str, Enum):
@@ -26,3 +26,4 @@ class ObjectDetectorConfig(BaseModel):
     log_level: LogLevel = LogLevel.WARNING
     model_config: YoloV8Config
     inference_size: tuple[int, int] = (640, 640)
+    classes: conlist(int) = None

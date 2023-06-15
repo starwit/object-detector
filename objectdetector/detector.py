@@ -43,7 +43,8 @@ class Detector:
         predictions = non_max_suppression(
             yolo_prediction, 
             conf_thres=self.config.model_config.confidence_threshold, 
-            iou_thres=self.config.model_config.iou_threshold
+            iou_thres=self.config.model_config.iou_threshold,
+            classes=self.config.classes,
         )[0]
         predictions[:, :4] = scale_boxes(inf_image.shape[2:], predictions[:, :4], input_image.shape[:2]).round()
 
