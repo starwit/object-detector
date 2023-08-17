@@ -6,5 +6,5 @@ log_level: DEBUG
 redis:
   host: redis
   port: 6379
-  video_source_ids:
+  stream_ids:
     - video1

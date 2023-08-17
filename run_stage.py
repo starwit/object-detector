@@ -42,7 +42,7 @@ if __name__ == '__main__':
                 count=1,
                 block=5000,
                 streams={f'videosource:{id}': '$' if last_retrieved_id is None else last_retrieved_id 
-                         for id in CONFIG.redis.video_source_ids}
+                         for id in CONFIG.redis.stream_ids}
             )
         
             if result is None or len(result) == 0:

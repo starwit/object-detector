@@ -38,7 +38,7 @@ class YoloV8Config(BaseModel):
 class RedisConfig(BaseModel):
     host: str
     port: conint(ge=1, le=65536)
-    video_source_ids: conlist(str)
+    stream_ids: conlist(str)
 
 
 class ObjectDetectorConfig(BaseSettings):
