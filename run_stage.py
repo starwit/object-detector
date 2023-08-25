@@ -1,9 +1,12 @@
 import signal
-import redis
 import threading
+from typing import List
+
+import redis
+
 from objectdetector.config import ObjectDetectorConfig
 from objectdetector.detector import Detector
-from typing import List
+
 
 def extract_stream_id(input_stream_name: str) -> str:
     return input_stream_name.split(':')[1]

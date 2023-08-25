@@ -42,8 +42,8 @@ class Detector:
 
         predictions = non_max_suppression(
             yolo_prediction, 
-            conf_thres=self.config.model_config.confidence_threshold, 
-            iou_thres=self.config.model_config.iou_threshold,
+            conf_thres=self.config.model.confidence_threshold, 
+            iou_thres=self.config.model.iou_threshold,
             classes=self.config.classes,
         )[0]
         predictions[:, :4] = scale_boxes(inf_image.shape[2:], predictions[:, :4], input_image.shape[:2]).round()
@@ -53,16 +53,16 @@ class Detector:
 
     def _setup_model(self):
         logger.info('Setting up object-detector model...')
-        self.device = torch.device(self.config.model_config.device)
+        self.device = torch.device(self.config.model.device)
         self.model = AutoBackend(
             self._yolo_weights(),
             device=self.device,
-            fp16=self.config.model_config.fp16_quantization
+            fp16=self.config.model.fp16_quantization
         )
         self.input_image_size = check_imgsz(self.config.inference_size, stride=self.model.stride)
 
     def _yolo_weights(self):
-        return f'yolov8{self.config.model_config.size.value}.pt'
+        return f'yolov8{self.config.model.size.value}.pt'
     
     def _unpack_proto(self, proto_bytes):
         frame_proto = VideoFrame()
