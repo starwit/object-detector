@@ -31,12 +31,13 @@ if __name__ == '__main__':
 
     detector = Detector(CONFIG)
 
+    consume = RedisConsumer(CONFIG.redis.host, CONFIG.redis.port, 
+                            stream_keys=[f'{CONFIG.redis.input_stream_prefix}:{id}' for id in CONFIG.redis.stream_ids])
     publish = RedisPublisher(CONFIG.redis.host, CONFIG.redis.port)
-    consume = RedisConsumer(CONFIG.redis.host, CONFIG.redis.port, stream_keys=CONFIG.redis.stream_ids)
     
-    with publish, consume:
-        for stream_key, proto_data in consume():
-            if stream_key is None:
+    with consume, publish:
+        for stream_id, proto_data in consume():
+            if stream_id is None:
                 continue
 
             output_proto_data = detector.get(proto_data)
@@ -44,7 +45,7 @@ if __name__ == '__main__':
             if output_proto_data is None:
                 continue
 
-            publish(stream_key, proto_data)
+            publish(f'{CONFIG.redis.output_stream_prefix}:{stream_id}', proto_data)
 
             if stop_event.is_set():
                 break
