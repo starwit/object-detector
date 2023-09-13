@@ -34,7 +34,7 @@ class ObjectDetectorConfig(BaseSettings):
     model: YoloV8Config
     inference_size: tuple[int, int] = (640, 640)
     classes: conlist(int) = None
-    redis: RedisConfig = RedisConfig()
+    redis: RedisConfig
 
     model_config = SettingsConfigDict(env_nested_delimiter='__')
 
