@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "objectdetector"
-version = "0.4.0"
+version = "0.5.0"
 description = "Wraps a state-of-the-art detection model and communicates on its inputs and outputs following visionapi."
 authors = ["flonix8 <flstanek@googlemail.com>"]
 license = "GPL3"
@@ -11,6 +11,7 @@ python = "^3.10"
 ultralytics = "^8.0.97"
 pydantic = "^2.0.0"
 visionapi = { git = "https://github.com/starwit/vision-api.git", subdirectory = "python/visionapi", tag = "0.3.3" }
+visionlib = { git = "https://github.com/starwit/vision-lib.git", subdirectory = "python" }
 # This is a terrible, terrible hack. See: https://github.com/python-poetry/poetry/issues/6409
 torch = { url = "https://download.pytorch.org/whl/cu118/torch-2.0.1%2Bcu118-cp310-cp310-linux_x86_64.whl" }
 torchvision = { url = "https://download.pytorch.org/whl/cu118/torchvision-0.15.2%2Bcu118-cp310-cp310-linux_x86_64.whl" }
