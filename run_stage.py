@@ -1,8 +1,6 @@
 import signal
 import threading
-from typing import List
 
-import redis
 from visionlib.pipeline.consumer import RedisConsumer
 from visionlib.pipeline.publisher import RedisPublisher
 
