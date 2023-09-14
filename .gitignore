@@ -1,7 +1,10 @@
 __pycache__
+.vscode
 .venv
 *.pt
 *.png
 *.jpg
 .demo_frames
 .demo_detections
+*.yaml
+!settings.template.yaml
