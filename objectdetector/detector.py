@@ -4,6 +4,7 @@ from typing import Any
 
 import numpy as np
 import torch
+from prometheus_client import Counter, Histogram, Summary
 from ultralytics.nn.autobackend import AutoBackend
 from ultralytics.yolo.data.augment import LetterBox
 from ultralytics.yolo.utils.checks import check_imgsz
@@ -14,6 +15,12 @@ from .config import ObjectDetectorConfig
 
 logging.basicConfig(format='%(asctime)s %(name)-15s %(levelname)-8s %(processName)-10s %(message)s')
 logger = logging.getLogger(__name__)
+
+GET_DURATION = Histogram('object_detector_get_duration', 'The time it takes to deserialize the proto until returning the detection result as a serialized proto',
+                         buckets=(0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25))
+MODEL_DURATION = Summary('object_detector_model_duration', 'How long the model call takes (without NMS)')
+NMS_DURATION = Summary('object_detector_nms_duration', 'How long non-max suppression takes')
+OBJECT_COUNTER = Counter('object_detector_object_counter', 'How many objects have been detected')
 
 
 class Detector:
@@ -30,25 +37,30 @@ class Detector:
     def __call__(self, input_proto, *args, **kwargs) -> Any:
         return self.get(input_proto)
 
+    @GET_DURATION.time()
     @torch.no_grad()
     def get(self, input_proto):
             
         input_image, frame_proto = self._unpack_proto(input_proto)
             
-        inference_start = time.monotonic_ns()
+        inference_start = time.time_ns()
         inf_image = self._prepare_input(input_image)
 
-        yolo_prediction = self.model(inf_image)
+        with MODEL_DURATION.time():
+            yolo_prediction = self.model(inf_image)
 
-        predictions = non_max_suppression(
-            yolo_prediction, 
-            conf_thres=self.config.model.confidence_threshold, 
-            iou_thres=self.config.model.iou_threshold,
-            classes=self.config.classes,
-        )[0]
+        with NMS_DURATION.time():
+            predictions = non_max_suppression(
+                yolo_prediction, 
+                conf_thres=self.config.model.confidence_threshold, 
+                iou_thres=self.config.model.iou_threshold,
+                classes=self.config.classes,
+            )[0]
         predictions[:, :4] = scale_boxes(inf_image.shape[2:], predictions[:, :4], input_image.shape[:2]).round()
 
-        inference_time_us = (time.monotonic_ns() - inference_start) // 1000
+        OBJECT_COUNTER.inc(len(predictions))
+
+        inference_time_us = (time.time_ns() - inference_start) // 1000
         return self._create_output(predictions, frame_proto, inference_time_us)
 
     def _setup_model(self):
