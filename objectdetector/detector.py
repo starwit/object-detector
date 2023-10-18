@@ -10,6 +10,7 @@ from ultralytics.yolo.data.augment import LetterBox
 from ultralytics.yolo.utils.checks import check_imgsz
 from ultralytics.yolo.utils.ops import non_max_suppression, scale_boxes
 from visionapi.messages_pb2 import DetectionOutput, Metrics, VideoFrame
+from visionlib.pipeline.tools import get_raw_frame_data
 
 from .config import ObjectDetectorConfig
 
@@ -83,8 +84,7 @@ class Detector:
         frame_proto = VideoFrame()
         frame_proto.ParseFromString(proto_bytes)
 
-        input_image = np.frombuffer(frame_proto.frame_data, dtype=np.uint8) \
-            .reshape((frame_proto.shape.height, frame_proto.shape.width, frame_proto.shape.channels))
+        input_image = get_raw_frame_data(frame_proto)
         return input_image, frame_proto
     
     def _prepare_input(self, image):
