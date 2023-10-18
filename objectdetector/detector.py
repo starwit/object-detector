@@ -21,6 +21,8 @@ GET_DURATION = Histogram('object_detector_get_duration', 'The time it takes to d
 MODEL_DURATION = Summary('object_detector_model_duration', 'How long the model call takes (without NMS)')
 NMS_DURATION = Summary('object_detector_nms_duration', 'How long non-max suppression takes')
 OBJECT_COUNTER = Counter('object_detector_object_counter', 'How many objects have been detected')
+PROTO_SERIALIZATION_DURATION = Summary('object_detector_proto_serialization_duration', 'The time it takes to create a serialized output proto')
+PROTO_DESERIALIZATION_DURATION = Summary('object_detector_proto_deserialization_duration', 'The time it takes to deserialize an input proto')
 
 
 class Detector:
@@ -76,6 +78,7 @@ class Detector:
     def _yolo_weights(self):
         return f'yolov8{self.config.model.size.value}.pt'
     
+    @PROTO_DESERIALIZATION_DURATION.time()
     def _unpack_proto(self, proto_bytes):
         frame_proto = VideoFrame()
         frame_proto.ParseFromString(proto_bytes)
@@ -91,6 +94,7 @@ class Detector:
         out_img = torch.from_numpy(out_img).to(self.device).float() / 255.0
         return out_img.unsqueeze(0)
 
+    @PROTO_SERIALIZATION_DURATION.time()
     def _create_output(self, predictions, frame_proto, inference_time_us):
         output = DetectionOutput()
 
