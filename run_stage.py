@@ -1,12 +1,21 @@
+import logging
 import signal
 import threading
 
+from prometheus_client import Counter, Histogram, start_http_server
 from visionlib.pipeline.consumer import RedisConsumer
 from visionlib.pipeline.publisher import RedisPublisher
 
 from objectdetector.config import ObjectDetectorConfig
 from objectdetector.detector import Detector
 
+logger = logging.getLogger(__name__)
+
+PROMETHEUS_METRICS_PORT = 8000
+
+REDIS_PUBLISH_DURATION = Histogram('object_detector_redis_publish_duration', 'The time it takes to push a message onto the Redis stream',
+                                   buckets=(0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25))
+FRAME_COUNTER = Counter('object_detector_frame_counter', 'How many frames have been consumed from the Redis input stream')
 
 def extract_stream_id(input_stream_name: str) -> str:
     return input_stream_name.split(':')[1]
@@ -27,6 +36,14 @@ if __name__ == '__main__':
     # Load config from settings.yaml / env vars
     CONFIG = ObjectDetectorConfig()
 
+    logger.setLevel(CONFIG.log_level.value)
+
+    logger.info(f'Starting prometheus metrics endpoint on port {PROMETHEUS_METRICS_PORT}')
+
+    start_http_server(PROMETHEUS_METRICS_PORT)
+
+    logger.info(f'Starting object detector stage. Config: {CONFIG.model_dump_json(indent=2)}')
+
     detector = Detector(CONFIG)
 
     consume = RedisConsumer(CONFIG.redis.host, CONFIG.redis.port, 
@@ -41,10 +58,13 @@ if __name__ == '__main__':
             if stream_id is None:
                 continue
 
+            FRAME_COUNTER.inc()
+
             output_proto_data = detector.get(proto_data)
 
             if output_proto_data is None:
                 continue
-
-            publish(f'{CONFIG.redis.output_stream_prefix}:{stream_id}', output_proto_data)
+            
+            with REDIS_PUBLISH_DURATION.time():
+                publish(f'{CONFIG.redis.output_stream_prefix}:{stream_id}', output_proto_data)
             
