@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker push docker.internal.starwit-infra.de/sae/object-detector:$(poetry version --short)
+docker push starwitorg/sae-object-detector:$(poetry version --short)

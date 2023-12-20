@@ -1,4 +1,7 @@
 # Object Detector
+
+This component is part of the Starwit Awareness Engine (SAE). See umbrella repo here: https://github.com/starwit/vision-pipeline-k8s
+
 ## How to set up
 - Make sure you have Poetry installed (otherwise see here: https://python-poetry.org/docs/#installing-with-the-official-installer)
 - Until Poetry supports installing torch (see: https://github.com/python-poetry/poetry/issues/6409) we have to manually download torch and torchvision
