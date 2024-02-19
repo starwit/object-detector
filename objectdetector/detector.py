@@ -59,7 +59,8 @@ class Detector:
                 iou_thres=self.config.model.iou_threshold,
                 classes=self.config.classes,
             )[0]
-        predictions[:, :4] = scale_boxes(inf_image.shape[2:], predictions[:, :4], input_image.shape[:2]).round()
+        predictions[:, :4] = scale_boxes(inf_image.shape[2:], predictions[:, :4], input_image.shape[:2])
+        self._normalize_boxes(predictions, input_image.shape[:2])
 
         OBJECT_COUNTER.inc(len(predictions))
 
@@ -93,6 +94,12 @@ class Detector:
         out_img = np.ascontiguousarray(out_img)
         out_img = torch.from_numpy(out_img).to(self.device).float() / 255.0
         return out_img.unsqueeze(0)
+    
+    def _normalize_boxes(self, predictions, image_shape):
+        predictions[:,0] /= image_shape[1]
+        predictions[:,2] /= image_shape[1]
+        predictions[:,1] /= image_shape[0]
+        predictions[:,3] /= image_shape[0]
 
     @PROTO_SERIALIZATION_DURATION.time()
     def _create_output(self, predictions, frame_proto, inference_time_us):
@@ -101,10 +108,10 @@ class Detector:
         for pred in predictions:
             detection = output.detections.add()
 
-            detection.bounding_box.min_x = int(pred[0])
-            detection.bounding_box.min_y = int(pred[1])
-            detection.bounding_box.max_x = int(pred[2])
-            detection.bounding_box.max_y = int(pred[3])
+            detection.bounding_box.min_x = float(pred[0])
+            detection.bounding_box.min_y = float(pred[1])
+            detection.bounding_box.max_x = float(pred[2])
+            detection.bounding_box.max_y = float(pred[3])
 
             detection.confidence = float(pred[4])
             detection.class_id = int(pred[5])
