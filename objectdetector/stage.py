@@ -6,8 +6,8 @@ from prometheus_client import Counter, Histogram, start_http_server
 from visionlib.pipeline.consumer import RedisConsumer
 from visionlib.pipeline.publisher import RedisPublisher
 
-from objectdetector.config import ObjectDetectorConfig
-from objectdetector.detector import Detector
+from .config import ObjectDetectorConfig
+from .detector import Detector
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ FRAME_COUNTER = Counter('object_detector_frame_counter', 'How many frames have b
 def extract_stream_id(input_stream_name: str) -> str:
     return input_stream_name.split(':')[1]
 
-if __name__ == '__main__':
+def run_stage():
 
     stop_event = threading.Event()
 

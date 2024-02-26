@@ -9,7 +9,7 @@ from ultralytics.nn.autobackend import AutoBackend
 from ultralytics.yolo.data.augment import LetterBox
 from ultralytics.yolo.utils.checks import check_imgsz
 from ultralytics.yolo.utils.ops import non_max_suppression, scale_boxes
-from visionapi.messages_pb2 import DetectionOutput, Metrics, VideoFrame
+from visionapi.messages_pb2 import Metrics, SaeMessage, VideoFrame
 from visionlib.pipeline.tools import get_raw_frame_data
 
 from .config import ObjectDetectorConfig
@@ -81,12 +81,12 @@ class Detector:
         return f'yolov8{self.config.model.size.value}.pt'
     
     @PROTO_DESERIALIZATION_DURATION.time()
-    def _unpack_proto(self, proto_bytes):
-        frame_proto = VideoFrame()
-        frame_proto.ParseFromString(proto_bytes)
+    def _unpack_proto(self, sae_message_bytes):
+        sae_msg = SaeMessage()
+        sae_msg.ParseFromString(sae_message_bytes)
 
-        input_image = get_raw_frame_data(frame_proto)
-        return input_image, frame_proto
+        input_image = get_raw_frame_data(sae_msg.frame)
+        return input_image, sae_msg.frame
     
     def _prepare_input(self, image):
         out_img = LetterBox(self.input_image_size, auto=True, stride=self.model.stride)(image=image)
@@ -103,10 +103,10 @@ class Detector:
 
     @PROTO_SERIALIZATION_DURATION.time()
     def _create_output(self, predictions, frame_proto, inference_time_us):
-        output = DetectionOutput()
+        sae_msg = SaeMessage()
 
         for pred in predictions:
-            detection = output.detections.add()
+            detection = sae_msg.detections.add()
 
             detection.bounding_box.min_x = float(pred[0])
             detection.bounding_box.min_y = float(pred[1])
@@ -116,8 +116,8 @@ class Detector:
             detection.confidence = float(pred[4])
             detection.class_id = int(pred[5])
 
-        output.frame.CopyFrom(frame_proto)
+        sae_msg.frame.CopyFrom(frame_proto)
 
-        output.metrics.detection_inference_time_us = inference_time_us
+        sae_msg.metrics.detection_inference_time_us = inference_time_us
 
-        return output.SerializeToString()
+        return sae_msg.SerializeToString()
