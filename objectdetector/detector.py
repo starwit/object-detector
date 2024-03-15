@@ -58,6 +58,7 @@ class Detector:
                 conf_thres=self.config.model.confidence_threshold, 
                 iou_thres=self.config.model.iou_threshold,
                 classes=self.config.classes,
+                agnostic=self.config.model.nms_agnostic,
             )[0]
         predictions[:, :4] = scale_boxes(inf_image.shape[2:], predictions[:, :4], input_image.shape[:2])
         self._normalize_boxes(predictions, input_image.shape[:2])

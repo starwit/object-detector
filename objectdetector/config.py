@@ -19,6 +19,7 @@ class YoloV8Config(BaseModel):
     confidence_threshold: float = 0.25
     iou_threshold: float = 0.45
     fp16_quantization: bool = False
+    nms_agnostic: bool = False
 
 
 class RedisConfig(BaseModel):
