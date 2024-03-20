@@ -50,7 +50,7 @@ class Detector:
         inf_image = self._prepare_input(input_image)
 
         with MODEL_DURATION.time():
-            yolo_prediction = self.model(inf_image)
+            yolo_prediction = self.model(inf_image)        
 
         with NMS_DURATION.time():
             predictions = non_max_suppression(
@@ -58,6 +58,7 @@ class Detector:
                 conf_thres=self.config.model.confidence_threshold, 
                 iou_thres=self.config.model.iou_threshold,
                 classes=self.config.classes,
+                agnostic=True,
             )[0]
         predictions[:, :4] = scale_boxes(inf_image.shape[2:], predictions[:, :4], input_image.shape[:2])
         self._normalize_boxes(predictions, input_image.shape[:2])
@@ -115,6 +116,7 @@ class Detector:
 
             detection.confidence = float(pred[4])
             detection.class_id = int(pred[5])
+            #detection.class_id = 2
 
         sae_msg.frame.CopyFrom(frame_proto)
 
