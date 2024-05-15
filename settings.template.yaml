@@ -3,6 +3,8 @@ model:
   device: "cpu"
 inference_size: [ 640, 640 ]
 classes: [ 2 ]
+max_batch_size: 1
+max_batch_interval: 0
 log_level: DEBUG
 redis:
   host: redis

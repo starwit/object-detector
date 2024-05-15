@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Any
+from typing import Any, List, NamedTuple
 
 import numpy as np
 import torch
@@ -12,6 +12,7 @@ from ultralytics.yolo.utils.ops import non_max_suppression, scale_boxes
 from visionapi.messages_pb2 import Metrics, SaeMessage, VideoFrame
 from visionlib.pipeline.tools import get_raw_frame_data
 
+from .batch import BatchEntry
 from .config import ObjectDetectorConfig
 
 logging.basicConfig(format='%(asctime)s %(name)-15s %(levelname)-8s %(processName)-10s %(message)s')
@@ -25,6 +26,9 @@ OBJECT_COUNTER = Counter('object_detector_object_counter', 'How many objects hav
 PROTO_SERIALIZATION_DURATION = Summary('object_detector_proto_serialization_duration', 'The time it takes to create a serialized output proto')
 PROTO_DESERIALIZATION_DURATION = Summary('object_detector_proto_deserialization_duration', 'The time it takes to deserialize an input proto')
 
+class ProcessEntry(NamedTuple):
+    numpy_image: np.ndarray
+    video_frame: VideoFrame
 
 class Detector:
     def __init__(self, config: ObjectDetectorConfig) -> None:
@@ -42,15 +46,24 @@ class Detector:
 
     @GET_DURATION.time()
     @torch.no_grad()
-    def get(self, input_proto):
+    def get(self, input_batch: List[BatchEntry]) -> List[BatchEntry]:
+        
+
+        process_batch: List[ProcessEntry] = []
+
+        for entry in input_batch:
+            numpy_image, video_frame = self._unpack_proto(entry.proto_data)
+            prepared_image = self._prepare_input(numpy_image)
+            process_batch.append(ProcessEntry(prepared_image, video_frame))
             
-        input_image, frame_proto = self._unpack_proto(input_proto)
-            
+        numpy_batch = np.array([entry.numpy_image for entry in process_batch])
+        numpy_batch_ct = np.ascontiguousarray(numpy_batch)
+        batch_tensor = torch.from_numpy(numpy_batch_ct).to(self.device).float() / 255.0
+
         inference_start = time.time_ns()
-        inf_image = self._prepare_input(input_image)
 
         with MODEL_DURATION.time():
-            yolo_prediction = self.model(inf_image)
+            yolo_prediction = self.model(batch_tensor)
 
         with NMS_DURATION.time():
             predictions = non_max_suppression(
@@ -59,14 +72,17 @@ class Detector:
                 iou_thres=self.config.model.iou_threshold,
                 classes=self.config.classes,
                 agnostic=self.config.model.nms_agnostic,
-            )[0]
-        predictions[:, :4] = scale_boxes(inf_image.shape[2:], predictions[:, :4], input_image.shape[:2])
-        self._normalize_boxes(predictions, input_image.shape[:2])
-
-        OBJECT_COUNTER.inc(len(predictions))
+            )
 
         inference_time_us = (time.time_ns() - inference_start) // 1000
-        return self._create_output(predictions, frame_proto, inference_time_us)
+
+        output_batch = []
+        for input_entry, process_entry, prediction in zip(input_batch, process_batch, predictions):
+            prediction[:, :4] = scale_boxes(process_entry.numpy_image.shape[1:], prediction[:, :4], (process_entry.video_frame.shape.height, process_entry.video_frame.shape.width))
+            self._normalize_boxes(prediction, process_entry.numpy_image.shape[1:])
+            OBJECT_COUNTER.inc(len(prediction))
+            output_batch.append(BatchEntry(input_entry.stream_key, self._create_output(prediction, process_entry.video_frame, inference_time_us // len(input_batch))))
+        return output_batch
 
     def _setup_model(self):
         logger.info('Setting up object-detector model...')
@@ -89,12 +105,10 @@ class Detector:
         input_image = get_raw_frame_data(sae_msg.frame)
         return input_image, sae_msg.frame
     
-    def _prepare_input(self, image):
+    def _prepare_input(self, image) -> torch.Tensor:
         out_img = LetterBox(self.input_image_size, auto=True, stride=self.model.stride)(image=image)
         out_img = out_img.transpose((2, 0, 1))[::-1]
-        out_img = np.ascontiguousarray(out_img)
-        out_img = torch.from_numpy(out_img).to(self.device).float() / 255.0
-        return out_img.unsqueeze(0)
+        return out_img
     
     def _normalize_boxes(self, predictions, image_shape):
         predictions[:,0] /= image_shape[1]
