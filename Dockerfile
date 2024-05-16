@@ -17,6 +17,9 @@ ENV POETRY_HOME=/opt/poetry
 RUN curl -sSL https://install.python-poetry.org | python3 -
 ENV PATH="${POETRY_HOME}/bin:${PATH}"
 
+# This is needed for `tensorrt-*` installation (see https://github.com/NVIDIA/TensorRT/issues/3050)
+ENV NVIDIA_TENSORRT_DISABLE_INTERNAL_PIP=True
+
 # Copy only files that are necessary to install dependencies
 COPY poetry.lock poetry.toml pyproject.toml /code/
 

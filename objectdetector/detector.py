@@ -6,9 +6,9 @@ import numpy as np
 import torch
 from prometheus_client import Counter, Histogram, Summary
 from ultralytics.nn.autobackend import AutoBackend
-from ultralytics.yolo.data.augment import LetterBox
-from ultralytics.yolo.utils.checks import check_imgsz
-from ultralytics.yolo.utils.ops import non_max_suppression, scale_boxes
+from ultralytics.data.augment import LetterBox
+from ultralytics.utils.checks import check_imgsz
+from ultralytics.utils.ops import non_max_suppression, scale_boxes
 from visionapi.messages_pb2 import Metrics, SaeMessage, VideoFrame
 from visionlib.pipeline.tools import get_raw_frame_data
 
@@ -47,8 +47,6 @@ class Detector:
     @GET_DURATION.time()
     @torch.no_grad()
     def get(self, input_batch: List[BatchEntry]) -> List[BatchEntry]:
-        
-
         process_batch: List[ProcessEntry] = []
 
         for entry in input_batch:
@@ -79,7 +77,7 @@ class Detector:
         output_batch = []
         for input_entry, process_entry, prediction in zip(input_batch, process_batch, predictions):
             prediction[:, :4] = scale_boxes(process_entry.numpy_image.shape[1:], prediction[:, :4], (process_entry.video_frame.shape.height, process_entry.video_frame.shape.width))
-            self._normalize_boxes(prediction, process_entry.numpy_image.shape[1:])
+            self._normalize_boxes(prediction, (process_entry.video_frame.shape.height, process_entry.video_frame.shape.width))
             OBJECT_COUNTER.inc(len(prediction))
             output_batch.append(BatchEntry(input_entry.stream_key, self._create_output(prediction, process_entry.video_frame, inference_time_us // len(input_batch))))
         return output_batch
@@ -95,7 +93,7 @@ class Detector:
         self.input_image_size = check_imgsz(self.config.inference_size, stride=self.model.stride)
 
     def _yolo_weights(self):
-        return f'yolov8{self.config.model.size.value}.pt'
+        return f'yolov8{self.config.model.size.value}.{"engine" if self.config.model.use_tensorrt == True else "pt"}'
     
     @PROTO_DESERIALIZATION_DURATION.time()
     def _unpack_proto(self, sae_message_bytes):

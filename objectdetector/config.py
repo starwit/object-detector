@@ -22,6 +22,7 @@ class YoloV8Config(BaseModel):
     iou_threshold: float = 0.45
     fp16_quantization: bool = False
     nms_agnostic: bool = False
+    use_tensorrt: bool = False
 
 
 class RedisConfig(BaseModel):

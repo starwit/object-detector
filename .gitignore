@@ -2,6 +2,7 @@ __pycache__
 .vscode
 .venv
 *.pt
+*.engine
 *.png
 *.jpg
 .demo_frames
