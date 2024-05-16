@@ -1,6 +1,7 @@
 model:
   size: n
   device: "cpu"
+  use_tensorrt: false
 inference_size: [ 640, 640 ]
 classes: [ 2 ]
 max_batch_size: 1
