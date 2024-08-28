@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "objectdetector"
-version = "2.3.0"
+version = "2.4.0"
 description = "Wraps a state-of-the-art detection model and communicates on its inputs and outputs following visionapi."
 authors = ["flonix8 <flstanek@googlemail.com>"]
 license = "AGPLv3"
@@ -17,6 +17,7 @@ torchvision = "^0.17.1"
 redis = "^5.0.0"
 pydantic-settings = "^2.0.3"
 prometheus-client = "^0.17.1"
+setuptools = "^74.0.0"
 tensorrt-cu12 = {version = "^10.0.1", source = "nvidia"}
 tensorrt-cu12-libs = {version = "^10.0.1", source = "nvidia"}
 tensorrt-cu12-bindings = {version = "^10.0.1", source = "nvidia"}

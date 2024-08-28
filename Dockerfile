@@ -1,4 +1,4 @@
-FROM python:3.11-slim as build
+FROM python:3.12-slim AS build
 
 # Download all variants of ultralytics yolov8
 ADD "https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.pt" /code/
@@ -32,7 +32,7 @@ COPY . /code/
 
 ### Main artifact / deliverable image
 
-FROM python:3.11-slim
+FROM python:3.12-slim
 RUN apt update && apt install --no-install-recommends -y \
     libglib2.0-0 \
     libgl1 \

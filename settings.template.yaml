@@ -6,6 +6,7 @@ classes: [ 2 ]
 max_batch_size: 1
 max_batch_interval: 0
 log_level: DEBUG
+drop_edge_detections: False
 redis:
   host: redis
   port: 6379

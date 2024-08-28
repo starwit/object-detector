@@ -45,7 +45,8 @@ def run_stage():
     detector = Detector(CONFIG)
 
     consume = RedisConsumer(CONFIG.redis.host, CONFIG.redis.port, 
-                            stream_keys=[f'{CONFIG.redis.input_stream_prefix}:{id}' for id in CONFIG.redis.stream_ids])
+                            stream_keys=[f'{CONFIG.redis.input_stream_prefix}:{id}' for id in CONFIG.redis.stream_ids],
+                            block=int(CONFIG.max_batch_interval * 1000))
     publish = RedisPublisher(CONFIG.redis.host, CONFIG.redis.port)
     
     with consume, publish:
@@ -53,7 +54,7 @@ def run_stage():
             if stop_event.is_set():
                 break
 
-            if len(batch) is None:
+            if len(batch) == 0:
                 continue
 
             FRAME_COUNTER.inc(len(batch))

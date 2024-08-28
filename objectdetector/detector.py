@@ -41,6 +41,19 @@ class Detector:
 
         self._setup_model()
 
+    def _setup_model(self):
+        logger.info('Setting up object-detector model...')
+        self.device = torch.device(self.config.model.device)
+        self.model = AutoBackend(
+            self._yolo_weights(),
+            device=self.device,
+            fp16=self.config.model.fp16_quantization
+        )
+        self.input_image_size = check_imgsz(self.config.inference_size, stride=self.model.stride)
+
+    def _yolo_weights(self):
+        return f'yolov8{self.config.model.size.value}.pt'
+
     def __call__(self, input_proto, *args, **kwargs) -> Any:
         return self.get(input_proto)
 
@@ -119,12 +132,20 @@ class Detector:
         sae_msg = SaeMessage()
 
         for pred in predictions:
+            bb_min_x = float(pred[0])
+            bb_min_y = float(pred[1])
+            bb_max_x = float(pred[2])
+            bb_max_y = float(pred[3])
+
+            if self.config.drop_edge_detections and self._is_edge_bounding_box(bb_min_x, bb_min_y, bb_max_x, bb_max_y):
+                continue
+
             detection = sae_msg.detections.add()
 
-            detection.bounding_box.min_x = float(pred[0])
-            detection.bounding_box.min_y = float(pred[1])
-            detection.bounding_box.max_x = float(pred[2])
-            detection.bounding_box.max_y = float(pred[3])
+            detection.bounding_box.min_x = bb_min_x
+            detection.bounding_box.min_y = bb_min_y
+            detection.bounding_box.max_x = bb_max_x
+            detection.bounding_box.max_y = bb_max_y
 
             detection.confidence = float(pred[4])
             detection.class_id = int(pred[5])
@@ -134,3 +155,11 @@ class Detector:
         sae_msg.metrics.detection_inference_time_us = inference_time_us
 
         return sae_msg.SerializeToString()
+
+    def _is_edge_bounding_box(self, min_x: float, min_y: float, max_x: float, max_y: float) -> bool:
+        return any((
+            min_x < 0.01,
+            min_y < 0.01,
+            max_x > 0.99,
+            max_y > 0.99
+        ))
