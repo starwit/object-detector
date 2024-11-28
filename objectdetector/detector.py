@@ -1,12 +1,13 @@
 import logging
+import re
 import time
 from typing import Any, List, NamedTuple
 
 import numpy as np
 import torch
 from prometheus_client import Counter, Histogram, Summary
-from ultralytics.nn.autobackend import AutoBackend
 from ultralytics.data.augment import LetterBox
+from ultralytics.nn.autobackend import AutoBackend
 from ultralytics.utils.checks import check_imgsz
 from ultralytics.utils.ops import non_max_suppression, scale_boxes
 from visionapi.messages_pb2 import Metrics, SaeMessage, VideoFrame
@@ -52,7 +53,13 @@ class Detector:
         self.input_image_size = check_imgsz(self.config.inference_size, stride=self.model.stride)
 
     def _yolo_weights(self):
-        return f'yolov8{self.config.model.size.value}.pt'
+        weights_path = self.config.model.weights_path
+        if weights_path.is_file():
+            return self.config.model.weights_path
+        elif re.match(r'^yolov8[nsmlx].pt$', weights_path.name) is not None and self.config.model.auto_download:
+            return weights_path
+        else:
+            raise IOError(f'Could not load weights with current model config: {self.config.model.model_dump_json()}')
 
     def __call__(self, input_proto, *args, **kwargs) -> Any:
         return self.get(input_proto)
@@ -105,9 +112,6 @@ class Detector:
         )
         self.input_image_size = check_imgsz(self.config.inference_size, stride=self.model.stride)
 
-    def _yolo_weights(self):
-        return f'yolov8{self.config.model.size.value}.{"engine" if self.config.model.use_tensorrt == True else "pt"}'
-    
     @PROTO_DESERIALIZATION_DURATION.time()
     def _unpack_proto(self, sae_message_bytes):
         sae_msg = SaeMessage()

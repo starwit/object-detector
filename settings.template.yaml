@@ -1,6 +1,8 @@
 model:
-  size: n
+  # Load yolo weights from file; If auto_download is enabled then this needs to match "yolov8[nsmlx].pt"
+  weights_path: yolov8n.pt
   device: "cpu"
+  # auto_download: True
 inference_size: [ 640, 640 ]
 classes: [ 2 ]
 max_batch_size: 1

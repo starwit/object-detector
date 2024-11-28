@@ -1,4 +1,4 @@
-from enum import Enum
+from pathlib import Path
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
@@ -7,22 +7,14 @@ from typing_extensions import Annotated
 from visionlib.pipeline.settings import LogLevel, YamlConfigSettingsSource
 
 
-class ModelSizeEnum(str, Enum):
-    NANO = 'n'
-    SMALL = 's'
-    MEDIUM = 'm'
-    LARGE = 'l'
-    XLARGE = 'x'
-
-
-class YoloV8Config(BaseModel):
-    size: ModelSizeEnum = ModelSizeEnum.NANO
+class YoloConfig(BaseModel):
+    weights_path: Path
+    auto_download: bool = False
     device: str = 'cpu'
     confidence_threshold: float = 0.25
     iou_threshold: float = 0.45
     fp16_quantization: bool = False
     nms_agnostic: bool = False
-    use_tensorrt: bool = False
 
 
 class RedisConfig(BaseModel):
@@ -35,7 +27,7 @@ class RedisConfig(BaseModel):
 
 class ObjectDetectorConfig(BaseSettings):
     log_level: LogLevel = LogLevel.WARNING
-    model: YoloV8Config
+    model: YoloConfig
     inference_size: tuple[int, int] = (640, 640)
     classes: Optional[List[int]] = None
     max_batch_size: Annotated[int, Field(ge=1)] = 1

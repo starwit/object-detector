@@ -1,11 +1,11 @@
 FROM python:3.12-slim AS build
 
 # Download all variants of ultralytics yolov8
-ADD "https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.pt" /code/
-ADD "https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8s.pt" /code/
-ADD "https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8m.pt" /code/
-ADD "https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8l.pt" /code/
-ADD "https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8x.pt" /code/
+ADD "https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8n.pt" /code/
+ADD "https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8s.pt" /code/
+ADD "https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8m.pt" /code/
+ADD "https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8l.pt" /code/
+ADD "https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8x.pt" /code/
 
 RUN apt update && apt install --no-install-recommends -y \
     curl \

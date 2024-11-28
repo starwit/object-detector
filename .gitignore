@@ -2,6 +2,7 @@ __pycache__
 .vscode
 .venv
 *.pt
+*.onnx
 *.engine
 *.png
 *.jpg
