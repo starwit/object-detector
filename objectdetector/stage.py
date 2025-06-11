@@ -36,9 +36,9 @@ def run_stage():
 
     logger.setLevel(CONFIG.log_level.value)
 
-    logger.info(f'Starting prometheus metrics endpoint on port {PROMETHEUS_METRICS_PORT}')
+    logger.info(f'Starting prometheus metrics endpoint on port {CONFIG.prometheus_port}')
 
-    start_http_server(PROMETHEUS_METRICS_PORT)
+    start_http_server(CONFIG.prometheus_port)
 
     logger.info(f'Starting object detector stage. Config: {CONFIG.model_dump_json(indent=2)}')
 

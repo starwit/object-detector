@@ -1,0 +1,4 @@
+#!/bin/bash
+
+mkdir -p /etc/starwit/objectdetector
+mkdir -p /opt/starwit/objectdetector

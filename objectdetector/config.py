@@ -34,6 +34,7 @@ class ObjectDetectorConfig(BaseSettings):
     max_batch_interval: Annotated[float, Field(ge=0)] = 0
     drop_edge_detections: bool = False
     redis: RedisConfig
+    prometheus_port: Annotated[int, Field(gt=1024, le=65536)] = 8000
 
     model_config = SettingsConfigDict(env_nested_delimiter='__')
 
