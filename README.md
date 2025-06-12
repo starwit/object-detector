@@ -9,7 +9,7 @@ This component is part of the Starwit Awareness Engine (SAE). See umbrella repo 
 
 ## How to Build
 
-See [dev readme](doc/DEV_READEME.md) for build instructions.
+See [dev readme](doc/DEV_README.md) for build instructions.
 
 ## Model Development
 In order to detect objects a trained model is necessary. See [model development](doc/Model_Development.md) documentation for more details.
