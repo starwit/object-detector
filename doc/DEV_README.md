@@ -30,7 +30,7 @@ make build-deb
 Package can be found in folder _target_. You can test install package using Docker like so:
 ```bash
 docker run -it --rm -v ./:/app  ubuntu:22.04 bash
-apt update && apt install -y /app/target/video-source-py_0.1.0_all.deb
+apt update && apt install -y /app/target/objectdetector_0.1.0_all.deb
 ```
 
 ```bash

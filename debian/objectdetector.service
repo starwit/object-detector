@@ -10,7 +10,7 @@ Restart=always
 RestartSec=5
 StandardOutput=syslog
 StandardError=syslog
-SyslogIdentifier=videosource
+SyslogIdentifier=objectdetector
 
 [Install]
 WantedBy=multi-user.target
