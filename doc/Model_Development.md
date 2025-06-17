@@ -1,7 +1,6 @@
 # Nvidia TensorRT
 A model optimized with Nvidia TensorRT can be much faster (200-300% increase in throughput), but is a lot more difficult to handle
 compare to the pytorch model, which is very portable.\
-Only set `use_tensorrt` in the model config to `True` if you know what you are doing!\
 Other detector settings strongly depend on the parameters that were used for the TensorRT optimizization, e.g. inference size and batch size.\
 Also, the installed Nvidia driver and CUDA component versions need to be tightly managed.
 
@@ -17,7 +16,7 @@ and bring a considerable performance uplift (roughly 3x):
 For inferencing it would probably be ideal to optimize for batch size 2 on an A2000 12GB,
 as the optimization process appears to consume significantly more memory than inferencing.
 
-### Example
+### Example using ultralytics TensorRT adapter
 ```python
 from ultralytics import YOLO
 
@@ -33,4 +32,16 @@ model.export(
     batch=1,
     half=True,
 )  # creates 'yolov8m.engine'
+```
+
+### Example using TensorRT tools (temporary notes)
+Additionally to running the Python snippet from above (which has not been tested on the Jetson, but should work!),
+it is also possible to use the TensorRT tools to do the same optimization.\
+Assuming that the TensorRT tools are installed, you can use the commandline tool `trtexec` to convert a model. First, you have to convert the model to ONNX format.
+```bash
+# Export YOLO model to ONNX format (the interdependency between `dynamic` and `imgsz` here is not fully clear yet)
+yolo export model=yolov8m.pt format=onnx simplify=True dynamic=True imgsz=1280
+
+# Convert ONNX model to TensorRT engine format, hardcoding the inference size
+trtexec --onnx=yolov8m.onnx --saveEngine=yolov8m_1280_736.engine --fp16 --optShapes=images:1x3x736x1280
 ```
