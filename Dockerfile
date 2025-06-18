@@ -22,14 +22,13 @@ ENV NVIDIA_TENSORRT_DISABLE_INTERNAL_PIP=True
 
 # Copy only files that are necessary to install dependencies
 COPY poetry.lock poetry.toml pyproject.toml /code/
-RUN touch /code/README.md
 
 WORKDIR /code
-   
+RUN poetry install
+    
 # Copy the rest of the project
 COPY . /code/
-RUN poetry lock --no-cache --regenerate
-RUN poetry install
+
 
 ### Main artifact / deliverable image
 
