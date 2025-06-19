@@ -34,14 +34,14 @@ model.export(
 )  # creates 'yolov8m.engine'
 ```
 
-### Example using TensorRT tools (temporary notes)
+### Example using TensorRT tools on Jetson Orin NX (temporary notes)
 Additionally to running the Python snippet from above (which has not been tested on the Jetson, but should work!),
 it is also possible to use the TensorRT tools to do the same optimization.\
 Assuming that the TensorRT tools are installed, you can use the commandline tool `trtexec` to convert a model. First, you have to convert the model to ONNX format.
 ```bash
-# Export YOLO model to ONNX format (the interdependency between `dynamic` and `imgsz` here is not fully clear yet)
-yolo export model=yolov8m.pt format=onnx simplify=True dynamic=True imgsz=1280
+# Export YOLO model to ONNX format (apparently this defines the maximum input dimensions and batch size the tensorrt model will be able to accept in the next step, even if the latter is also set to dynamic)
+yolo export model=yolov8m.pt format=onnx simplify=True dynamic=True batch=4 imgsz=1280 half=True
 
-# Convert ONNX model to TensorRT engine format, hardcoding the inference size
-trtexec --onnx=yolov8m.onnx --saveEngine=yolov8m_1280_736.engine --fp16 --optShapes=images:1x3x736x1280
+# Convert ONNX model to TensorRT engine format, explicitly specifying the range of dynamic dimensions
+trtexec --onnx=yolov8m.onnx --saveEngine=yolov8m.engine --fp16 --minShapes=images:1x3x640x640 --optShapes=images:4x3x736x1280 --maxShapes=images:4x3x736x1280
 ```
