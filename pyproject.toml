@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "objectdetector"
-version = "3.0.0"
+version = "3.1.0"
 description = "Wraps a state-of-the-art detection model and communicates on its inputs and outputs following visionapi."
 authors = ["flonix8 <flstanek@googlemail.com>"]
 license = "AGPLv3"
-readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
