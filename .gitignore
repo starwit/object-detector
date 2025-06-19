@@ -10,3 +10,5 @@ __pycache__
 .demo_detections
 *.yaml
 !settings.template.yaml
+target
+dist

@@ -1,0 +1,58 @@
+#!/bin/bash
+set -e
+
+export TORCH_URL=https://github.com/ultralytics/assets/releases/download/v0.0.0
+export TORCH_PACKAGE=torch-2.5.0-cp310-cp310-linux_aarch64.whl
+export TORCHVISION_URL=https://github.com/ultralytics/assets/releases/download/v0.0.0
+export TORCHVISION_PACKAGE=torchvision-0.20.0a0+afc54f7-cp310-cp310-linux_aarch64.whl
+
+# Install Python packages that aren't available via APT
+if [ "$1" = "configure" ]; then
+    echo "Object Detector: Installing Nvidia Python dependencies"
+    if ! pip3 list 2>/dev/null | grep -q "^torch "; then
+        wget $TORCH_URL/$TORCH_PACKAGE -O /tmp/$TORCH_PACKAGE
+        pip3 install /tmp/$TORCH_PACKAGE
+    fi
+    if ! pip3 list 2>/dev/null | grep -q "^torchvision "; then
+        wget $TORCHVISION_URL/$TORCHVISION_PACKAGE -O /tmp/$TORCHVISION_PACKAGE
+        pip3 install /tmp/$TORCHVISION_PACKAGE
+    fi
+    rm -f /tmp/*.whl
+
+    echo "Object Detector: Installing Python dependencies"
+    pip3 install --upgrade pip
+    pip3 install pyturbojpeg
+    pip3 install git+https://github.com/starwit/vision-api.git@3.2.0#subdirectory=python/visionapi
+    pip3 install git+https://github.com/starwit/vision-lib.git@0.11.2#subdirectory=python
+
+    pip3 install numpy matplotlib pandas pyyaml pillow psutil requests tqdm scipy seaborn ultralytics-thop py-cpuinfo opencv-python
+    pip install ultralytics --no-deps
+
+    echo "Download model"
+    wget https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8m.pt -O /opt/starwit/objectdetector/yolov8m.pt
+
+    echo "Create wrapper script"
+    mkdir -p /usr/local/bin
+    cat > /usr/local/bin/objectdetector <<EOF
+#!/bin/bash
+
+current_dir=$PWD
+cd /opt/starwit/objectdetector
+
+python3 main.py "\$@"
+cd $current_dir
+EOF
+    chmod +x /usr/local/bin/objectdetector    
+
+    # link settings file from etc
+    cd /opt/starwit/objectdetector
+    ln -s /etc/starwit/objectdetector/settings.yaml settings.yaml
+
+    systemctl daemon-reload
+    systemctl start objectdetector.service        
+    systemctl enable objectdetector.service
+fi
+
+#DEBHELPER#
+
+exit 0
