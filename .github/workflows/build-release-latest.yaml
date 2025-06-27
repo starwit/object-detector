@@ -28,11 +28,7 @@ jobs:
             bash -c ./start_make.sh
             echo "VERSION=$(poetry version -s)" >> $GITHUB_ENV
             echo "Done building APT package"
-      - name: create release
-        run: |
-          cd /code
-          find .
-          echo "Releasing package with version ${VERSION}"
-          gh release create ${VERSION} --title "${VERSION}" ./target/*deb ./target/*.dsc
+            echo "Releasing package with version ${VERSION}"
+            gh release create ${VERSION} --title "${VERSION}" ./target/*deb ./target/*.dsc
         env:
           GH_TOKEN: ${{ github.token }}
