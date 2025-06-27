@@ -13,3 +13,4 @@ __pycache__
 !settings.template.yaml
 target
 dist
+env.sh

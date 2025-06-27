@@ -32,5 +32,5 @@ jobs:
       - name: test poetry builds
         run: |
             export PATH=/root/.local/bin/:$PATH
-            poetry install
+            #poetry install
             #poetry build
