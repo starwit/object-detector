@@ -6,5 +6,5 @@ export PACKAGE_NAME=objectdetector
 export PATH=/root/.local/bin/:$PATH
 cd /code
 
-make
+make build-deb
 
