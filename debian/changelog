@@ -1,5 +1,11 @@
 objectdetector (3.0.0) unstable; urgency=medium
 
+  * First signed release
+
+ -- Florian Stanek <foss@starwit.de>  Sun, 27 Jun 2025 00:00:00 +0000
+
+objectdetector (1.0.0) unstable; urgency=medium
+
   * Initial release.
 
  -- Florian Stanek <foss@starwit.de>  Sun, 08 Jun 2025 00:00:00 +0000
