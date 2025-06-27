@@ -9,7 +9,14 @@ check-settings:
 	./check_settings.sh
 
 build-deb: check-settings
-	dpkg-buildpackage -us -uc
+
+	$(shell echo ${GPG_KEY} | base64 --decode | gpg --batch --import)
+	$(eval KEYID := $(shell gpg --list-keys --with-colons | grep pub | cut -d: -f5))
+	@echo "Signing with key id: $(KEYID)"
+
+	dpkg-buildpackage --no-sign
+	$(shell echo "${PASSPHRASE}" | debsign -k$(KEYID) -p"gpg --batch --pinentry-mode loopback --passphrase-fd 0" ../${PACKAGE_NAME}_*.changes)	
+
 	mkdir -p target
 	mv ../${PACKAGE_NAME}_* target/
 
