@@ -9,6 +9,8 @@ __pycache__
 .demo_frames
 .demo_detections
 *.yaml
+!.github/workflows/*.yaml
 !settings.template.yaml
 target
 dist
+env.sh
