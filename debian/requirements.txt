@@ -2,14 +2,12 @@
 
 torch @ https://github.com/ultralytics/assets/releases/download/v0.0.0/torch-2.5.0-cp310-cp310-linux_aarch64.whl
 torchvision @ https://github.com/ultralytics/assets/releases/download/v0.0.0/torchvision-0.20.0a0+afc54f7-cp310-cp310-linux_aarch64.whl
-#ultralytics==8.3.155 --config-settings="--install-option=--no-deps"
-
 
 annotated-types==0.7.0 ; python_version >= "3.10" and python_version < "4.0"
 async-timeout==5.0.1 ; python_version >= "3.10" and python_full_version < "3.11.3"
 certifi==2025.6.15 ; python_version >= "3.10" and python_version < "4.0"
 charset-normalizer==3.4.2 ; python_version >= "3.10" and python_version < "4.0"
-colorama==0.4.6 ; python_version >= "3.10" and python_version < "4.0" and platform_system == "Windows"
+colorama==0.4.6 ; python_version >= "3.10" and python_version < "4.0"
 contourpy==1.3.2 ; python_version >= "3.10" and python_version < "4.0"
 cycler==0.12.1 ; python_version >= "3.10" and python_version < "4.0"
 filelock==3.18.0 ; python_version >= "3.10" and python_version < "4.0"
@@ -39,8 +37,6 @@ pyjwt==2.9.0 ; python_version >= "3.10" and python_version < "4.0"
 pyparsing==3.2.3 ; python_version >= "3.10" and python_version < "4.0"
 python-dateutil==2.9.0.post0 ; python_version >= "3.10" and python_version < "4.0"
 python-dotenv==1.1.0 ; python_version >= "3.10" and python_version < "4.0"
-#pyturbojpeg==1.8.0 ; python_version >= "3.10" and python_version < "4.0"
-pyturbojpeg
 pytz==2025.2 ; python_version >= "3.10" and python_version < "4.0"
 pyyaml==6.0.2 ; python_version >= "3.10" and python_version < "4.0"
 redis==5.3.0 ; python_version >= "3.10" and python_version < "4.0"
