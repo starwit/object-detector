@@ -5,11 +5,11 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/starwit/objectdetector
-ExecStart=/usr/bin/python3 main.py
+ExecStart=/usr/local/bin/objectdetector
 Restart=always
 RestartSec=5
-StandardOutput=syslog
-StandardError=syslog
+StandardOutput=journal+console
+StandardError=journal+console
 SyslogIdentifier=objectdetector
 
 [Install]

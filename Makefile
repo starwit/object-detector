@@ -8,7 +8,14 @@ install:
 check-settings:
 	./check_settings.sh
 
-build-deb: check-settings
+set-version:
+	$(eval VERSION := $(shell poetry version -s))
+	@echo $(VERSION)
+	sed -i -e "s/###RELEASE_VERSION###/$(VERSION)/" debian/changelog
+
+build-deb: check-settings set-version
+
+	poetry export --without-hashes --format=requirements.txt > requirements.txt
 
 	$(shell echo ${GPG_KEY} | base64 --decode | gpg --batch --import)
 	$(eval KEYID := $(shell gpg --list-keys --with-colons | grep pub | cut -d: -f5))
@@ -37,3 +44,4 @@ clean:
 	rm -f debian/${PACKAGE_NAME}.prerm.debhelper
 	rm -rf debian/${PACKAGE_NAME}
 	rm -f *.tar.gz
+	rm -f requirements.txt

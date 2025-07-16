@@ -1,4 +1,7 @@
 settings.yaml /etc/starwit/objectdetector
 main.py /opt/starwit/objectdetector
 
+debian/requirements.txt /opt/starwit/objectdetector
+objectdetector /opt/starwit/objectdetector
+
 debian/objectdetector.service /usr/lib/systemd/system/
