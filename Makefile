@@ -15,8 +15,6 @@ set-version:
 
 build-deb: check-settings set-version
 
-	poetry export --without-hashes --format=requirements.txt > requirements.txt
-
 	$(shell echo ${GPG_KEY} | base64 --decode | gpg --batch --import)
 	$(eval KEYID := $(shell gpg --list-keys --with-colons | grep pub | cut -d: -f5))
 	@echo "Signing with key id: $(KEYID)"
