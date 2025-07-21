@@ -8,9 +8,6 @@ WorkingDirectory=/opt/starwit/objectdetector
 ExecStart=/usr/local/bin/objectdetector
 Restart=always
 RestartSec=5
-StandardOutput=journal+console
-StandardError=journal+console
-SyslogIdentifier=objectdetector
 
 [Install]
 WantedBy=multi-user.target
