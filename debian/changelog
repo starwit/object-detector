@@ -1,4 +1,4 @@
-objectdetector (3.1.0) unstable; urgency=medium
+objectdetector (###RELEASE_VERSION###) unstable; urgency=medium
 
   * First signed release
 
