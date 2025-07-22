@@ -5,6 +5,9 @@ export PACKAGE_NAME=objectdetector
 install:
 	poetry install
 
+test: install
+	poetry run pytest
+
 check-settings:
 	./check_settings.sh
 

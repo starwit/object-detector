@@ -1,33 +1,51 @@
-name: PR build
+name: pr-build
 
 on:
-  workflow_dispatch:
   pull_request:
-
-permissions:
-  contents: write
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  build:
+  pr-build-poetry:
+    name: PR Build with Poetry
+    runs-on: [self-hosted, linux, X64]
+    container:
+        image: starwitorg/base-python-image:0.0.15
+        volumes:
+            - /home/githubrunner/.cache/pypoetry:/root/.cache/pypoetry
+    steps:
+      #----------------------------------------------
+      #       check-out repo and set-up python
+      #----------------------------------------------
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Setup
+        run: |
+          python --version
+          poetry --version
+
+      #----------------------------------------------
+      # install your root project, if required
+      #----------------------------------------------
+      - name: Install project
+        run: |
+          poetry config cache-dir /root/.cache/pypoetry
+          bash -c "make test"
+
+  apt-build:
     name: package APT
     runs-on: [self-hosted, linux, X64]
     container:
-        image: starwitorg/debian-packaging:0.0.2
+        image: starwitorg/debian-packaging:0.0.3
         env:
           PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD_FLAT }}
-          GPG_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY_B64 }}          
-        volumes:
-            - ./:/code
-
+          GPG_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY_B64 }}
     steps:
       - name: checkout
         uses: actions/checkout@v4
       - name: build apt package
         run: |
-          echo "Build APT package"
-          bash -c "export PATH=/root/.local/bin/:$PATH; poetry self add poetry-plugin-export; make build-deb"
-          echo "Finish building APT package"
-      - name: test poetry builds
-        run: |
-            export PATH=/root/.local/bin/:$PATH
-            poetry install
+            echo "Build APT package"
+            bash -c "poetry self add poetry-plugin-export; make build-deb"
+            echo "Finish building APT package"
