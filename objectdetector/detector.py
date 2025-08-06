@@ -10,6 +10,7 @@ from ultralytics.data.augment import LetterBox
 from ultralytics.nn.autobackend import AutoBackend
 from ultralytics.utils.checks import check_imgsz
 from ultralytics.utils.ops import non_max_suppression, scale_boxes
+from visionapi.common_pb2 import MessageType
 from visionapi.sae_pb2 import Metrics, SaeMessage, VideoFrame
 from visionlib.pipeline.tools import get_raw_frame_data
 
@@ -157,6 +158,8 @@ class Detector:
         sae_msg.frame.CopyFrom(frame_proto)
 
         sae_msg.metrics.detection_inference_time_us = inference_time_us
+
+        sae_msg.type = MessageType.SAE
 
         return sae_msg.SerializeToString()
 
