@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -t starwitorg/sae-object-detector:$(poetry version --short) .
+docker build -t starwitorg/sae-object-detector:local .
