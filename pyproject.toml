@@ -8,16 +8,16 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
-ultralytics = "^8.2.15"
+ultralytics = "^8.3.180"
 pydantic = "^2.0.0"
 visionapi = { git = "https://github.com/starwit/vision-api.git", subdirectory = "python/visionapi", tag = "3.4.0" }
 visionlib = { git = "https://github.com/starwit/vision-lib.git", subdirectory = "python", tag = "0.11.2" }
 torch = "^2.2.1"
 torchvision = "^0.22.0"
-redis = "^5.0.0"
-pydantic-settings = "^2.0.3"
-prometheus-client = "^0.17.1"
-setuptools = "^74.0.0"
+redis = "^5.3.1"
+pydantic-settings = "^2.10.1"
+prometheus-client = "^0.22.1"
+setuptools = "^80.9.0"
 tensorrt-cu12 = {version = "^10.0.1", source = "nvidia"}
 tensorrt-cu12-libs = {version = "^10.0.1", source = "nvidia"}
 tensorrt-cu12-bindings = {version = "^10.0.1", source = "nvidia"}
