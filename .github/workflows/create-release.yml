@@ -16,7 +16,7 @@ permissions:
   contents: write
 
 env:
-  IMAGE_NAME: object-detector
+  IMAGE_NAME: sae-object-detector
   DOCKERHUB_USERNAME: starwit
   DOCKERHUB_ORG: starwitorg   
 

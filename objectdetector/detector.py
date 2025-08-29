@@ -34,33 +34,38 @@ class ProcessEntry(NamedTuple):
 
 class Detector:
     def __init__(self, config: ObjectDetectorConfig) -> None:
-        self.config = config
-        logger.setLevel(self.config.log_level.value)
+        self._config = config
+        logger.setLevel(self._config.log_level.value)
 
-        self.model = None
-        self.device = None
-        self.input_image_size = None
+        self._model = None
+        self._device = None
+        self._input_image_size = None
+        self._selected_classes: List[int] = None
 
         self._setup_model()
 
     def _setup_model(self):
         logger.info('Setting up object-detector model...')
-        self.device = torch.device(self.config.model.device)
-        self.model = AutoBackend(
+        self._device = torch.device(self._config.model.device)
+        self._model = AutoBackend(
             self._yolo_weights(),
-            device=self.device,
-            fp16=self.config.model.fp16_quantization
+            device=self._device,
+            fp16=self._config.model.fp16_quantization
         )
-        self.input_image_size = check_imgsz(self.config.inference_size, stride=self.model.stride)
+        self._input_image_size = check_imgsz(self._config.inference_size, stride=self._model.stride)
+        if self._config.classes:
+            self._selected_classes = self._config.classes
+        else:
+            self._selected_classes = list(self._model.names.keys())
 
     def _yolo_weights(self):
-        weights_path = self.config.model.weights_path
+        weights_path = self._config.model.weights_path
         if weights_path.is_file():
-            return self.config.model.weights_path
-        elif re.match(r'^yolov8[nsmlx].pt$', weights_path.name) is not None and self.config.model.auto_download:
+            return self._config.model.weights_path
+        elif re.match(r'^yolov8[nsmlx].pt$', weights_path.name) is not None and self._config.model.auto_download:
             return weights_path
         else:
-            raise IOError(f'Could not load weights with current model config: {self.config.model.model_dump_json()}')
+            raise IOError(f'Could not load weights with current model config: {self._config.model.model_dump_json()}')
 
     def __call__(self, input_proto, *args, **kwargs) -> Any:
         return self.get(input_proto)
@@ -77,20 +82,20 @@ class Detector:
             
         numpy_batch = np.array([entry.numpy_image for entry in process_batch])
         numpy_batch_ct = np.ascontiguousarray(numpy_batch)
-        batch_tensor = torch.from_numpy(numpy_batch_ct).to(self.device).float() / 255.0
+        batch_tensor = torch.from_numpy(numpy_batch_ct).to(self._device).float() / 255.0
 
         inference_start = time.time_ns()
 
         with MODEL_DURATION.time():
-            yolo_prediction = self.model(batch_tensor)
+            yolo_prediction = self._model(batch_tensor)
 
         with NMS_DURATION.time():
             predictions = non_max_suppression(
                 yolo_prediction, 
-                conf_thres=self.config.model.confidence_threshold, 
-                iou_thres=self.config.model.iou_threshold,
-                classes=self.config.classes,
-                agnostic=self.config.model.nms_agnostic,
+                conf_thres=self._config.model.confidence_threshold, 
+                iou_thres=self._config.model.iou_threshold,
+                classes=self._selected_classes,
+                agnostic=self._config.model.nms_agnostic,
             )
 
         inference_time_us = (time.time_ns() - inference_start) // 1000
@@ -103,16 +108,6 @@ class Detector:
             output_batch.append(BatchEntry(input_entry.stream_key, self._create_output(prediction, process_entry.video_frame, inference_time_us // len(input_batch))))
         return output_batch
 
-    def _setup_model(self):
-        logger.info('Setting up object-detector model...')
-        self.device = torch.device(self.config.model.device)
-        self.model = AutoBackend(
-            self._yolo_weights(),
-            device=self.device,
-            fp16=self.config.model.fp16_quantization
-        )
-        self.input_image_size = check_imgsz(self.config.inference_size, stride=self.model.stride)
-
     @PROTO_DESERIALIZATION_DURATION.time()
     def _unpack_proto(self, sae_message_bytes):
         sae_msg = SaeMessage()
@@ -122,7 +117,7 @@ class Detector:
         return input_image, sae_msg.frame
     
     def _prepare_input(self, image) -> torch.Tensor:
-        out_img = LetterBox(self.input_image_size, auto=True, stride=self.model.stride)(image=image)
+        out_img = LetterBox(self._input_image_size, auto=True, stride=self._model.stride)(image=image)
         out_img = out_img.transpose((2, 0, 1))[::-1]
         return out_img
     
@@ -142,7 +137,7 @@ class Detector:
             bb_max_x = float(pred[2])
             bb_max_y = float(pred[3])
 
-            if self.config.drop_edge_detections and self._is_edge_bounding_box(bb_min_x, bb_min_y, bb_max_x, bb_max_y):
+            if self._config.drop_edge_detections and self._is_edge_bounding_box(bb_min_x, bb_min_y, bb_max_x, bb_max_y):
                 continue
 
             detection = sae_msg.detections.add()
@@ -158,6 +153,9 @@ class Detector:
         sae_msg.frame.CopyFrom(frame_proto)
 
         sae_msg.metrics.detection_inference_time_us = inference_time_us
+
+        for class_id in self._selected_classes:
+            sae_msg.model_metadata.class_names[class_id] = self._model.names[class_id]
 
         sae_msg.type = MessageType.SAE
 
