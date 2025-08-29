@@ -38,7 +38,6 @@ class Detector:
         logger.setLevel(self._config.log_level.value)
 
         self._model = None
-        self._device = None
         self._input_image_size = None
         self._selected_classes: List[int] = None
 
@@ -46,10 +45,9 @@ class Detector:
 
     def _setup_model(self):
         logger.info('Setting up object-detector model...')
-        self._device = torch.device(self._config.model.device)
         self._model = AutoBackend(
             self._yolo_weights(),
-            device=self._device,
+            device=self._config.model.device,
             fp16=self._config.model.fp16_quantization
         )
         self._input_image_size = check_imgsz(self._config.inference_size, stride=self._model.stride)
@@ -60,7 +58,7 @@ class Detector:
 
     def _yolo_weights(self):
         weights_path = self._config.model.weights_path
-        if weights_path.is_file():
+        if weights_path.is_file() or weights_path.is_dir():
             return self._config.model.weights_path
         elif re.match(r'^yolov8[nsmlx].pt$', weights_path.name) is not None and self._config.model.auto_download:
             return weights_path
@@ -82,7 +80,7 @@ class Detector:
             
         numpy_batch = np.array([entry.numpy_image for entry in process_batch])
         numpy_batch_ct = np.ascontiguousarray(numpy_batch)
-        batch_tensor = torch.from_numpy(numpy_batch_ct).to(self._device).float() / 255.0
+        batch_tensor = torch.from_numpy(numpy_batch_ct).float() / 255.0
 
         inference_start = time.time_ns()
 
