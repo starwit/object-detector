@@ -9,7 +9,7 @@ from numpy.typing import NDArray
 from prometheus_client import Summary
 from ultralytics.engine.results import Results
 from ultralytics.nn.autobackend import AutoBackend
-from ultralytics.utils.ops import non_max_suppression
+from ultralytics.utils.nms import non_max_suppression
 
 from .config import ModelConfig, LogLevel
 
