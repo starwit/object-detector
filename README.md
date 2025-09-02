@@ -29,6 +29,7 @@ With [dependabot.yml](.github/dependabot.yml) a scheduled version update via Dep
 ## Changelog
 ### 4.0.0
 - Explicitly support PyTorch (on CPU, Nvidia and Intel GPU), TensorRT (on Nvidia) and OpenVINO (on Intel) versions of YOLO models
+- Update CUDA libs -> TensorRT recompilation is needed!
 - Improve error messages regarding model configuration
 - Breaking config changes
   - Move `inference_size` and `classes` into `.model`
