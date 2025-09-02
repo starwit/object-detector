@@ -1,29 +1,27 @@
 import logging
-import re
 import time
 from typing import Any, List, NamedTuple
 
 import numpy as np
 import torch
+from numpy.typing import NDArray
 from prometheus_client import Counter, Histogram, Summary
 from ultralytics.data.augment import LetterBox
-from ultralytics.nn.autobackend import AutoBackend
 from ultralytics.utils.checks import check_imgsz
-from ultralytics.utils.ops import non_max_suppression, scale_boxes
+from ultralytics.utils.ops import scale_boxes
 from visionapi.common_pb2 import MessageType
-from visionapi.sae_pb2 import Metrics, SaeMessage, VideoFrame
+from visionapi.sae_pb2 import SaeMessage, VideoFrame
 from visionlib.pipeline.tools import get_raw_frame_data
 
 from .batch import BatchEntry
 from .config import ObjectDetectorConfig
+from .model import Model
 
 logging.basicConfig(format='%(asctime)s %(name)-15s %(levelname)-8s %(processName)-10s %(message)s')
 logger = logging.getLogger(__name__)
 
 GET_DURATION = Histogram('object_detector_get_duration', 'The time it takes to deserialize the proto until returning the detection result as a serialized proto',
                          buckets=(0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25))
-MODEL_DURATION = Summary('object_detector_model_duration', 'How long the model call takes (without NMS)')
-NMS_DURATION = Summary('object_detector_nms_duration', 'How long non-max suppression takes')
 OBJECT_COUNTER = Counter('object_detector_object_counter', 'How many objects have been detected')
 PROTO_SERIALIZATION_DURATION = Summary('object_detector_proto_serialization_duration', 'The time it takes to create a serialized output proto')
 PROTO_DESERIALIZATION_DURATION = Summary('object_detector_proto_deserialization_duration', 'The time it takes to deserialize an input proto')
@@ -37,33 +35,14 @@ class Detector:
         self._config = config
         logger.setLevel(self._config.log_level.value)
 
-        self._model = None
-        self._input_image_size = None
-        self._selected_classes: List[int] = None
-
-        self._setup_model()
-
-    def _setup_model(self):
         logger.info('Setting up object-detector model...')
-        self._model = AutoBackend(
-            self._yolo_weights(),
-            device=self._config.model.device,
-            fp16=self._config.model.fp16_quantization
-        )
-        self._input_image_size = check_imgsz(self._config.inference_size, stride=self._model.stride)
-        if self._config.classes:
-            self._selected_classes = self._config.classes
-        else:
-            self._selected_classes = list(self._model.names.keys())
+        self._model = Model(self._config.model)
+        self._input_image_size = check_imgsz(self._config.model.inference_size, stride=self._model.stride)
 
-    def _yolo_weights(self):
-        weights_path = self._config.model.weights_path
-        if weights_path.is_file() or weights_path.is_dir():
-            return self._config.model.weights_path
-        elif re.match(r'^yolov8[nsmlx].pt$', weights_path.name) is not None and self._config.model.auto_download:
-            return weights_path
-        else:
-            raise IOError(f'Could not load weights with current model config: {self._config.model.model_dump_json()}')
+        self._effective_classes = self._config.model.classes
+        if not self._effective_classes:
+            # Choose all classes if no filter is configured
+            self._effective_classes = list(self._model.names.keys())    
 
     def __call__(self, input_proto, *args, **kwargs) -> Any:
         return self.get(input_proto)
@@ -79,22 +58,10 @@ class Detector:
             process_batch.append(ProcessEntry(prepared_image, video_frame))
             
         numpy_batch = np.array([entry.numpy_image for entry in process_batch])
-        numpy_batch_ct = np.ascontiguousarray(numpy_batch)
-        batch_tensor = torch.from_numpy(numpy_batch_ct).float() / 255.0
 
         inference_start = time.time_ns()
 
-        with MODEL_DURATION.time():
-            yolo_prediction = self._model(batch_tensor)
-
-        with NMS_DURATION.time():
-            predictions = non_max_suppression(
-                yolo_prediction, 
-                conf_thres=self._config.model.confidence_threshold, 
-                iou_thres=self._config.model.iou_threshold,
-                classes=self._selected_classes,
-                agnostic=self._config.model.nms_agnostic,
-            )
+        predictions = self._model(numpy_batch)
 
         inference_time_us = (time.time_ns() - inference_start) // 1000
 
@@ -114,7 +81,7 @@ class Detector:
         input_image = get_raw_frame_data(sae_msg.frame)
         return input_image, sae_msg.frame
     
-    def _prepare_input(self, image) -> torch.Tensor:
+    def _prepare_input(self, image) -> NDArray:
         out_img = LetterBox(self._input_image_size, auto=True, stride=self._model.stride)(image=image)
         out_img = out_img.transpose((2, 0, 1))[::-1]
         return out_img
@@ -152,7 +119,7 @@ class Detector:
 
         sae_msg.metrics.detection_inference_time_us = inference_time_us
 
-        for class_id in self._selected_classes:
+        for class_id in self._effective_classes:
             sae_msg.model_metadata.class_names[class_id] = self._model.names[class_id]
 
         sae_msg.type = MessageType.SAE

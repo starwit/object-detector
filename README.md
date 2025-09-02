@@ -25,3 +25,11 @@ The following Github Actions are available:
 ## Dependabot Version Update
 
 With [dependabot.yml](.github/dependabot.yml) a scheduled version update via Dependabot is configured. Dependabot creates a pull request if newer versions are available and the compilation is checked via PR build.
+
+## Changelog
+### 4.0.0
+- Explicitly support PyTorch (on CPU, Nvidia and Intel GPU), TensorRT (on Nvidia) and OpenVINO (on Intel) versions of YOLO models
+- Improve error messages regarding model configuration
+- Breaking config changes
+  - Move `inference_size` and `classes` into `.model`
+  - Rename `fp16_quantization` to `fp16`
