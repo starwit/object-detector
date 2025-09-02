@@ -4,13 +4,16 @@ from typing import Dict, List
 
 import numpy as np
 import torch
+import logging
 from numpy.typing import NDArray
 from prometheus_client import Summary
 from ultralytics.engine.results import Results
 from ultralytics.nn.autobackend import AutoBackend
 from ultralytics.utils.ops import non_max_suppression
 
-from .config import ModelConfig
+from .config import ModelConfig, LogLevel
+
+logger = logging.getLogger(__name__)
 
 MODEL_DURATION = Summary('object_detector_model_duration', 'How long the model call takes (without NMS)')
 NMS_DURATION = Summary('object_detector_nms_duration', 'How long non-max suppression takes')
@@ -42,14 +45,17 @@ class ModelType(str, Enum):
     TENSORRT = 'TENSORRT'
 
 class Model:
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: ModelConfig, log_level: LogLevel = LogLevel.INFO):
+        logger.setLevel(log_level.value)
         self._config = config
         self._model_type = self._determine_model_type(config.weights_path)
+        logger.info(f'Detected model type: {self._model_type.name}')
         self._check_weights_path(config.weights_path)
-        self._model = AutoBackend(config.weights_path, self._get_device(config.device), config.fp16)
+        self._check_configuration()
+        self._model = AutoBackend(str(config.weights_path), self._get_device(config.device), config.fp16)
 
     def _determine_model_type(self, weights_path: Path) -> ModelType:
-        model_type = AutoBackend._model_type(weights_path)
+        model_type = AutoBackend._model_type(str(weights_path))
         if model_type[0]:
             return ModelType.PT
         elif model_type[3]:
@@ -62,6 +68,10 @@ class Model:
     def _check_weights_path(self, weights_path: Path):
         if not weights_path.exists() and not self._config.auto_download:
             raise ValueError(f'No such file or directory found at {weights_path} and auto_download==False')
+        
+    def _check_configuration(self):
+        if self._config.device.startswith('intel:') and self._model_type != ModelType.OPENVINO:
+            raise ValueError(f'Only OpenVINO models are supported with `intel:*` device type')
         
     def _get_device(self, device_str: str) -> torch.device | str:
         if self._model_type == ModelType.TENSORRT:

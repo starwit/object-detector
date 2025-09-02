@@ -36,7 +36,7 @@ class Detector:
         logger.setLevel(self._config.log_level.value)
 
         logger.info('Setting up object-detector model...')
-        self._model = Model(self._config.model)
+        self._model = Model(self._config.model, self._config.log_level)
         self._input_image_size = check_imgsz(self._config.model.inference_size, stride=self._model.stride)
 
         self._effective_classes = self._config.model.classes
