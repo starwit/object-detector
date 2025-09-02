@@ -1,14 +1,14 @@
+log_level: INFO
 model:
-  # Load yolo weights from file; If auto_download is enabled then this needs to match "yolov8[nsmlx].pt"
-  weights_path: yolov8n.pt
-  device: "cpu"
-  # auto_download: True
-inference_size: [ 640, 640 ]
-classes: [ 2 ]
-max_batch_size: 1
-max_batch_interval: 0
-log_level: DEBUG
-drop_edge_detections: False
+  weights_path: yolov8n.pt                  # Load yolo weights from file; If auto_download is enabled then this needs to match "yolov8[nsmlx].pt"
+  device: "cpu"                             # device to run model on: "cpu", "cuda" (nvidia), "intel:gpu" (must be openvino model)
+  classes: [ 2 ]                            # Class filter; Delete property to disable filter
+  inference_size: [ 640, 640 ]              # Inference size [height, width] in px
+  # auto_download: True                     # Whether to automatically attempt to download yolov*.pt standard models
+  nms_agnostic: False                       # Whether to treat all bounding boxes as the same class during non max suppression
+max_batch_size: 1                           # Maximum batch size (model needs to support dynamic batch sizes > 1)
+max_batch_interval: 0                       # Maximum time to wait in sec for a batch to fill
+drop_edge_detections: False                 # Whether to drop detections touching the frame edge
 redis:
   host: redis
   port: 6379
