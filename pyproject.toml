@@ -10,7 +10,7 @@ package-mode = false
 python = "^3.10"
 ultralytics = "^8.2.15"
 pydantic = "^2.0.0"
-visionapi = { git = "https://github.com/starwit/vision-api.git", subdirectory = "python/visionapi", tag = "3.5.0" }
+visionapi = { git = "https://github.com/starwit/vision-api.git", subdirectory = "python/visionapi", tag = "3.5.1" }
 visionlib = { git = "https://github.com/starwit/vision-lib.git", subdirectory = "python", tag = "0.11.2" }
 torch = "^2.2.1"
 torchvision = "^0.22.0"
@@ -22,6 +22,7 @@ tensorrt-cu12 = {version = "^10.0.1", source = "nvidia"}
 tensorrt-cu12-libs = {version = "^10.0.1", source = "nvidia"}
 tensorrt-cu12-bindings = {version = "^10.0.1", source = "nvidia"}
 pytest = "8.4.1"
+openvino = "^2025.2.0"
 
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.13.2"
