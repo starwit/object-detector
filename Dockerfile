@@ -1,4 +1,4 @@
-FROM starwitorg/base-python-image:0.0.15 AS build
+FROM starwitorg/base-python-image:3.13.0 AS build
 
 # Download all variants of ultralytics yolov8
 ADD "https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8n.pt" /code/
@@ -21,7 +21,7 @@ COPY . /code/
 
 ### Main artifact / deliverable image
 
-FROM python:3.12-slim
+FROM python:3.13-slim
 RUN apt update && apt install --no-install-recommends -y \
     libglib2.0-0 \
     libgl1 \
