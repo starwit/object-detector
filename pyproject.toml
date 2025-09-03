@@ -10,7 +10,7 @@ package-mode = false
 python = "^3.10"
 ultralytics = "^8.2.15"
 pydantic = "^2.0.0"
-visionapi = { git = "https://github.com/starwit/vision-api.git", subdirectory = "python/visionapi", tag = "3.5.1" }
+visionapi = { git = "https://github.com/starwit/vision-api.git", subdirectory = "python/visionapi", tag = "3.5.2" }
 visionlib = { git = "https://github.com/starwit/vision-lib.git", subdirectory = "python", tag = "0.11.2" }
 torch = "^2.2.1"
 torchvision = "^0.22.0"
