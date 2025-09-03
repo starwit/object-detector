@@ -45,6 +45,11 @@ class ModelType(str, Enum):
     TENSORRT = 'TENSORRT'
 
 class Model:
+    """
+    The Model class encapsulates the loading, configuration, and inference of object detection models
+    using the Ultralytics backend. It determines the model type based on the provided weights, validates
+    configuration and device compatibility.
+    """
     def __init__(self, config: ModelConfig, log_level: LogLevel = LogLevel.INFO):
         logger.setLevel(log_level.value)
         self._config = config
